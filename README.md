@@ -9,3 +9,20 @@ Project objectives:
 2. Transform data in to processed data S3 bucket
 3. Upload transformed data to data warehouse
 4. Carry out analysis of data for presentation
+
+
+# Northcoders Final Project Discussion 09-08-2024
+
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [License](#license)
+- [Credits](#credits)
+- [Contributing](#contributing)
+- [Tests](#tests)
+- [Questions](#questions)
+
+
+<a href="https://www.notion.so/Northcoders-Final-Project-Discussion-09-08-2024-fd6760cf9f33427cb93a6050ec5c1808">Notion Project Page</a>
