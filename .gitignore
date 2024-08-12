@@ -8,3 +8,8 @@ venv/
 *.zip
 **/.terraform*
 *.tfstate*
+
+
+
+# should be deleted later
+.github
