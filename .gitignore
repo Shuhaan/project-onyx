@@ -1,0 +1,10 @@
+temp/
+**/.vscode
+**/*_cache
+**/*pycache
+*coverage*
+venv/
+.ipynb_checkpoints
+*.zip
+**/.terraform*
+*.tfstate*
