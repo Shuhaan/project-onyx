@@ -8,7 +8,7 @@ venv/
 *.zip
 **/.terraform*
 *.tfstate*
-
+requirements.txt
 
 
 # should be deleted later
