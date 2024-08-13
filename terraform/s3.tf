@@ -13,7 +13,7 @@ resource "aws_s3_bucket" "onyx_processed_bucket" {
 }
 
 resource "aws_s3_bucket" "onyx_lambda_code_bucket" {
-  bucket = "onyx_lambda_code_bucket"
+  bucket = var.lambda_code_bucket
   tags = {
     Name = "lambda-code-bucket"
   }
