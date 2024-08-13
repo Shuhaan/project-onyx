@@ -15,7 +15,7 @@ resource "aws_lambda_permission" "extract_permission" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.extract_handler.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.scheduler.arn
+  source_arn    = aws_cloudwatch_event_rule.extract_scheduler.arn
 }
 
 #Create Email Notification Upon Extraction Error
