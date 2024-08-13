@@ -38,9 +38,9 @@ def format_response(columns, response):
         formatted_response.append(extracted_from_response)
     return formatted_response
 
-def format_response_2(columns, data, label):
-    if len(data) > 1:
-        formatted_data = [dict(zip(columns, row))for row in data]
-    else:
-        formatted_data = dict(zip(columns, data[0]))
-    return {label: formatted_data}
+# def format_response_2(columns, data, label):
+#     if len(data) > 1:
+#         formatted_data = [dict(zip(columns, row))for row in data]
+#     else:
+#         formatted_data = dict(zip(columns, data[0]))
+#     return {label: formatted_data}

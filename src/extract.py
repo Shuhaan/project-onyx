@@ -4,6 +4,7 @@ import logging
 import boto3
 from datetime import datetime
 from pprint import pprint
+import json
 
 
 # logger = logging.getLogger("OnyxLogger")
@@ -14,17 +15,26 @@ totesys_table_list = ['address', 'design', 'transaction', 'sales_order',
                       'payment_type', 'currency', 'department' ]
 
 def extract_from_db():
+    s3_client = boto3.client('s3')
     conn = connect_to_db()
-    time_stamp = 0
+
     
     for table in totesys_table_list:
         query = f'''SELECT * FROM {table}
-                    LIMIT 1 ;
+                    LIMIT 2 ;
                     '''
+        # logic required to check timestamps for updates
+        
         response = conn.run(query)
-        headers = [col['name'] for col in conn.columns]
-        formatted_response = format_response(headers, response)
-        print(formatted_response)
+        columns = [col['name'] for col in conn.columns]
+        formatted_response = {table: format_response(columns, response)}
+        extracted_json = json.dumps(formatted_response, indent=4)
+        print(extracted_json)
+        
+        # write extracted_json to ingestion s3
+        
     conn.close()
         
 extract_from_db()
+
+
