@@ -1,4 +1,4 @@
-resource "aws_s3_bucket" "onyx_ingestion_bucket" {
+resource "aws_s3_bucket" "ingested_data_bucket" {
   bucket = var.ingested_data_bucket
   tags = {
     Name = "ingestion-bucket"
