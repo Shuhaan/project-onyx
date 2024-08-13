@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 pytest
 pytest-testdox
 pg8000
@@ -9,4 +7,3 @@ botocore
 moto
 mock
 pandas
->>>>>>> Stashed changes
