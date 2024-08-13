@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "trust_policy" {
 }
 
 # Create
-resource "aws_iam_role" "extract_lambda" {
+resource "aws_iam_role" "extract_lambda_role" {
   name_prefix        = "role-${var.extract_lambda}"
   assume_role_policy = data.aws_iam_policy_document.trust_policy.json
 }
