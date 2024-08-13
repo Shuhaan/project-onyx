@@ -1,12 +1,12 @@
 resource "aws_s3_bucket" "onyx_ingestion_bucket" {
-  bucket = "onyx_ingestion_bucket"
+  bucket = var.ingested_data_bucket
   tags = {
     Name = "ingestion-bucket"
   }
 }
 
 resource "aws_s3_bucket" "onyx_processed_bucket" {
-  bucket = "onyx_processed_bucket"
+  bucket = var.processed_data_bucket
   tags = {
     Name = "processed-bucket"
   }
