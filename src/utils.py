@@ -3,9 +3,8 @@ import os
 import json
 from botocore.exceptions import ClientError
 
-def get_secret():
-    secret_name = "project-onyx/totesys-db-login"
-    region_name = "eu-west-2"
+
+def get_secret(secret_name="project-onyx/totesys-db-login",region_name="eu-west-2"):
     # Create a Secrets Manager client
     session = boto3.session.Session()
     client = session.client(
