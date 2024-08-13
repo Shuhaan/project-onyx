@@ -18,6 +18,7 @@ provider "aws" {
     tags = {
       ProjectName = "Data Warehouse from Totesys"
       Team = "Project Onyx"
+      TeamMembers = "Hasan, Arif, Ayub, Saif, Ewan, Shuhaan"
       DeployedFrom = "Terraform"
       Repository = "https://github.com/Shuhaan/project-onyx"
       CostCentre = "DE"
