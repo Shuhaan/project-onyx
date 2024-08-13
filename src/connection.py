@@ -3,6 +3,8 @@ from pg8000.exceptions import DatabaseError
 # from dotenv import load_dotenv
 import os
 from src.utils import get_secret
+import logging
+import boto3
 
 # load_dotenv()
 
@@ -17,6 +19,9 @@ from src.utils import get_secret
 
 #if __name__ == "__main__":
 
+logger = logging.getLogger("OnyxLogger")
+logger.setLevel(logging.INFO)
+
 def connect_to_db():
     try:
         credentials = get_secret()
@@ -29,12 +34,7 @@ def connect_to_db():
         )
     
     except DatabaseError as e:
+        logger.error()
         print(e)
         raise e
 
-def test():
-    conn = connect_to_db()
-    query = '''SELECT * FROM payment
-limit 1;
-'''
-    return conn.run(query)
