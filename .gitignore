@@ -9,7 +9,7 @@ venv/
 **/.terraform*
 *.tfstate*
 requirements.txt
-
+.env
 
 # should be deleted later
 .github
