@@ -1,0 +1,12 @@
+<<<<<<< Updated upstream
+=======
+pytest
+pytest-testdox
+pg8000
+python-dotenv
+boto3
+botocore
+moto
+mock
+pandas
+>>>>>>> Stashed changes
