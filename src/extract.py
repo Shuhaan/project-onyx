@@ -25,5 +25,6 @@ def extract_from_db():
         headers = [col['name'] for col in conn.columns]
         formatted_response = format_response(headers, response)
         print(formatted_response)
+    conn.close()
         
 extract_from_db()
