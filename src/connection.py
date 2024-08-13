@@ -19,8 +19,8 @@ import boto3
 
 #if __name__ == "__main__":
 
-logger = logging.getLogger("OnyxLogger")
-logger.setLevel(logging.INFO)
+# logger = logging.getLogger("OnyxLogger")
+# logger.setLevel(logging.INFO)
 
 def connect_to_db():
     try:
@@ -34,7 +34,7 @@ def connect_to_db():
         )
     
     except DatabaseError as e:
-        logger.error()
+        # logger.error()
         print(e)
         raise e
 
