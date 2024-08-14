@@ -1,8 +1,8 @@
-import pytest
+import pytest, logging
 import os
 import boto3
 from moto import mock_aws
-from src.utils import get_secret
+from src.utils import get_secret, log_message
 
 
 @pytest.fixture(scope="class")
@@ -32,3 +32,10 @@ def test_get_secret(secretsmanager_client):
     )
     response = get_secret(secret_name="aSecret", region_name="eu-west-2")
     assert response == {"username": "userId", "password": "password"}
+
+def test_log_message(caplog):
+    caplog.set_level(logging.INFO)
+    result = log_message("function_name", "30", "This is a warning")
+    expected = ['This is a warning']
+    assert caplog.messages == expected
+    assert "WARNING" in caplog.text
