@@ -19,28 +19,31 @@ def get_secret(secret_name="project-onyx/totesys-db-login", region_name="eu-west
     result_dict = json.loads(secret)
     return result_dict
 
-def log_message (name, level, message=''):
+
+def log_message(name, level, message=""):
     # sends a message to the logger
     # use __name__ to pass function name to this function
     # example useage: log_message("function_name", "30", "This is a warning")
     # function author: Arif Syed
 
     logger = logging.getLogger(name)
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%d/%m/%Y %I:%M:%S %p",
+    )
     logger.setLevel(logging.DEBUG)
 
-    if level == '10':
+    if level == "10":
         logger.debug(message)
 
-    if level == '20':
+    if level == "20":
         logger.info(message)
 
-    if level == '30':
+    if level == "30":
         logger.warning(message)
 
-    if level == '40':
+    if level == "40":
         logger.error(message)
 
-    if level == '50':
+    if level == "50":
         logger.critical(message)
-
