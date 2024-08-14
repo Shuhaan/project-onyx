@@ -2,7 +2,7 @@ from pg8000.native import Connection
 from pg8000.exceptions import DatabaseError
 # from dotenv import load_dotenv
 import os
-from src.utils import get_secret
+from utilities.utils import get_secret
 import logging
 import boto3
 

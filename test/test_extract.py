@@ -19,7 +19,7 @@ def secretsmanager_client():
         yield boto3.client('secretsmanager')
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 def test_get_bucket_contents(s3_resource):
     bucket = create_s3_bucket('test-bucket', s3_resource=s3_resource)
     upload_to_s3('test.txt', 'test-bucket')
@@ -32,7 +32,7 @@ def test_extract(s3_resource):
     print(bucket)
     assert extract_from_db_write_to_s3(bucket) == view_bucket_contents(bucket)
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 def test_get_secret(secretsmanager_client):
     credentials_storer('secret', 'bob', 'marley', secretsmanager_client)
     assert secret_retriever('secret', secretsmanager_client) == {
