@@ -12,9 +12,9 @@ import json
 
 most_recent_extract = ''
 
-def extract_from_db(bucket_name, s3_resource=boto3.resource('s3')):
-
-    bucket = s3_resource.Bucket(bucket_name)
+# def extract_from_db(bucket_name, s3_resource=boto3.resource('s3')):
+def extract_from_db_write_to_s3(bucket):
+    # bucket = s3_resource.Bucket(bucket_name)
 
     extract_time = datetime.now()
     extract_year = extract_time.year
@@ -28,6 +28,7 @@ def extract_from_db(bucket_name, s3_resource=boto3.resource('s3')):
                       'payment_type', 'currency', 'department' ]
     
     conn = connect_to_db()
+    print (conn)
 
     for table in totesys_table_list:
         query = f'''SELECT * FROM {table}

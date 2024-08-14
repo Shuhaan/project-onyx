@@ -1,11 +1,11 @@
 import pytest
-from src.extract import extract_from_db
 from moto import mock_aws
-from unittest import mock
+# from unittest import mock
 import boto3
-from src.extract import extract_from_db
+from src.extract import extract_from_db_write_to_s3
 from utilities.utils import create_s3_bucket, upload_to_s3, \
     view_bucket_contents, credentials_storer, secret_retriever
+
 
 @pytest.fixture()
 def s3_resource():
@@ -30,7 +30,7 @@ def test_get_bucket_contents(s3_resource):
 def test_extract(s3_resource):   
     bucket = create_s3_bucket('test-bucket', s3_resource=s3_resource)
     print(bucket)
-    assert extract_from_db('test-bucket', s3_resource=s3_resource) == view_bucket_contents(bucket)
+    assert extract_from_db_write_to_s3(bucket) == view_bucket_contents(bucket)
 
 # @pytest.mark.skip()
 def test_get_secret(secretsmanager_client):
