@@ -63,6 +63,11 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_extract_write_policy_attach
 
 data "aws_iam_policy_document" "s3_transform_data_policy_doc" {
   statement {
+    actions = ["s3:GetObject"]
+    resources = [aws_s3_bucket.ingested_data_bucket.arn]
+    effect = "Allow"
+  }
+  statement {
     actions = ["s3:PutObject"]
     resources = [aws_s3_bucket.onyx_processed_bucket.arn]
     effect = "Allow"
@@ -74,6 +79,7 @@ resource "aws_iam_policy" "s3_transform_write_policy" {
   name_prefix = "s3-policy-${var.transform_lambda}-write"
   policy = data.aws_iam_policy_document.s3_transform_data_policy_doc.json
 }
+
 
 # Attach
 resource "aws_iam_role_policy_attachment" "lambda_s3_transform_write_policy_attachment" {
@@ -87,7 +93,7 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_transform_write_policy_atta
 # --------------------------------------
 
 # Define
-data "aws_iam_policy_document" "cw_document" {
+data "aws_iam_policy_document" "extract_cw_document" {
   statement {
     actions = [ 
       "logs:CreateLogGroup",
@@ -112,16 +118,16 @@ data "aws_iam_policy_document" "cw_document" {
 }
 
 # Create
-resource "aws_iam_policy" "cw_policy" {
+resource "aws_iam_policy" "extract_cw_policy" {
   name_prefix = "cw-policy-${var.extract_lambda}"
-  policy      = data.aws_iam_policy_document.cw_document.json
+  policy      = data.aws_iam_policy_document.extract_cw_document.json
 }
 
 
 # Attach
-resource "aws_iam_role_policy_attachment" "lambda_cw_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "extract_lambda_cw_policy_attachment" {
   role       = aws_iam_role.extract_lambda_role.name
-  policy_arn  = aws_iam_policy.cw_policy.arn
+  policy_arn  = aws_iam_policy.extract_cw_policy.arn
 }
 
 # --------------------------------------
@@ -129,7 +135,7 @@ resource "aws_iam_role_policy_attachment" "lambda_cw_policy_attachment" {
 # --------------------------------------
 
 # Define
-data "aws_iam_policy_document" "cw_document" {
+data "aws_iam_policy_document" "transform_cw_document" {
   statement {
     actions = [ 
       "logs:CreateLogGroup",
@@ -154,14 +160,14 @@ data "aws_iam_policy_document" "cw_document" {
 }
 
 # Create
-resource "aws_iam_policy" "cw_policy" {
+resource "aws_iam_policy" "transform_cw_policy" {
   name_prefix = "cw-policy-${var.transform_lambda}"
-  policy      = data.aws_iam_policy_document.cw_document.json
+  policy      = data.aws_iam_policy_document.transform_cw_document.json
 }
 
 
 # Attach
-resource "aws_iam_role_policy_attachment" "lambda_cw_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "transform_lambda_cw_policy_attachment" {
   role       = aws_iam_role.transform_lambda_role.name
-  policy_arn  = aws_iam_policy.cw_policy.arn
+  policy_arn  = aws_iam_policy.transform_cw_policy.arn
 }
