@@ -33,6 +33,12 @@ def extract_from_db():
         
         # write extracted_json to ingestion s3
         
+
+        response = s3_client.put_object(
+            Bucket='onyx_ingestion_bucket',
+            Key='',
+            Body=extracted_json,
+        )
     conn.close()
         
 extract_from_db()
