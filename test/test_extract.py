@@ -1,41 +1,46 @@
 import pytest
 from moto import mock_aws
-# from unittest import mock
 import boto3
 from src.extract import extract_from_db_write_to_s3
-from utilities.utils import create_s3_bucket, upload_to_s3, \
-    view_bucket_contents, credentials_storer, secret_retriever
+from utilities.utils_for_testing import (
+    create_s3_bucket,
+    upload_to_s3,
+    view_bucket_contents,
+    credentials_storer,
+    secret_retriever
+)
 
 
 @pytest.fixture()
 def s3_resource():
     with mock_aws():
-        yield boto3.resource('s3')
+        yield boto3.resource("s3")
 
 
 @pytest.fixture()
 def secretsmanager_client():
     with mock_aws():
-        yield boto3.client('secretsmanager')
+        yield boto3.client("secretsmanager")
 
 
 # @pytest.mark.skip()
 def test_get_bucket_contents(s3_resource):
-    bucket = create_s3_bucket('test-bucket', s3_resource=s3_resource)
-    upload_to_s3('test.txt', 'test-bucket')
-    upload_to_s3('test2.txt', 'test-bucket')
-    assert view_bucket_contents(bucket) == ['test.txt', 'test2.txt']
+    bucket = create_s3_bucket("test-bucket", s3_resource=s3_resource)
+    upload_to_s3("test.txt", bucket)
+    upload_to_s3("test2.txt", bucket)
+    assert view_bucket_contents(bucket) == ["test.txt", "test2.txt"]
 
 
-def test_extract(s3_resource):   
-    bucket = create_s3_bucket('test-bucket', s3_resource=s3_resource)
+def test_extract(s3_resource):
+    bucket = create_s3_bucket("test-bucket", s3_resource=s3_resource)
     print(bucket)
     assert extract_from_db_write_to_s3(bucket) == view_bucket_contents(bucket)
 
+
 @pytest.mark.skip()
 def test_get_secret(secretsmanager_client):
-    credentials_storer('secret', 'bob', 'marley', secretsmanager_client)
-    assert secret_retriever('secret', secretsmanager_client) == {
-    "username":"bob",
-    "password":"marley"
-}
+    credentials_storer("secret", "bob", "marley", secretsmanager_client)
+    assert secret_retriever("secret", secretsmanager_client) == {
+        "username": "bob",
+        "password": "marley",
+    }

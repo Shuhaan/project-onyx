@@ -8,13 +8,13 @@ def connect_to_db():
     try:
         credentials = get_secret()
         return Connection(
-            user=credentials['username'],
-            password=credentials['password'],
+            user=credentials["username"],
+            password=credentials["password"],
             database=credentials["dbname"],
-            host=credentials['host'],
-            port=int(credentials['port'])
+            host=credentials["host"],
+            port=int(credentials["port"]),
         )
-    
+
     except DatabaseError as e:
         # need to call logging function
         print(e)

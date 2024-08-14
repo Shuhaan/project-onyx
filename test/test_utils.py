@@ -2,7 +2,7 @@ import pytest, logging
 import os
 import boto3
 from moto import mock_aws
-from src.utils import get_secret, log_message
+from utilities.utils import get_secret, log_message
 
 
 @pytest.fixture(scope="class")
