@@ -12,7 +12,7 @@ resource "aws_lambda_function" "extract_handler" {
   handler       = "extract.lambda_handler"
 
   source_code_hash = data.archive_file.extract_lambda.output_base64sha256
-
+  
   runtime = var.python_runtime
 
   timeout = 10

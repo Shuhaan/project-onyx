@@ -23,6 +23,7 @@ resource "aws_iam_role" "extract_lambda_role" {
 }
 
 
+
 resource "aws_iam_role" "transform_lambda_role" {
   name_prefix        = "role-${var.transform_lambda}"
   assume_role_policy = data.aws_iam_policy_document.trust_policy.json
@@ -34,7 +35,6 @@ resource "aws_iam_role" "transform_lambda_role" {
 # ------------------------------------
 
 # Define
-
 data "aws_iam_policy_document" "s3_extract_data_policy_doc" {
   statement {
     actions = ["s3:PutObject"]

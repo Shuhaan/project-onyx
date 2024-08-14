@@ -1,15 +1,21 @@
 from pg8000.native import Connection
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
+from pg8000.exceptions import DatabaseError
+from utilities.utils import get_secret
+import boto3
 
 
 def connect_to_db():
-    return Connection(
-        user=os.getenv("Username"),
-        password=os.getenv("Password"),
-        database=os.getenv("Database"),
-        host=os.getenv("Hostname"),
-        port=int(os.getenv("Port")),
-    )
+    try:
+        credentials = get_secret()
+        return Connection(
+            user=credentials['username'],
+            password=credentials['password'],
+            database=credentials["dbname"],
+            host=credentials['host'],
+            port=int(credentials['port'])
+        )
+    
+    except DatabaseError as e:
+        # need to call logging function
+        print(e)
+        raise e

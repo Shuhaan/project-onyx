@@ -1,7 +1,7 @@
 temp/
 **/.vscode
 **/*_cache
-**/*pycache
+**/*pycache*
 *coverage*
 venv/
 .ipynb_checkpoints
