@@ -2,8 +2,8 @@ import boto3
 import os
 from botocore.exceptions import ClientError
 import json
-# from datetime import datetime
-# from decimal import Decimal
+from datetime import datetime
+from decimal import Decimal
 
 region_name = "eu-west-2"
 
@@ -11,12 +11,13 @@ client = boto3.client('secretsmanager', region_name='eu-west-2')
 
 
 def credentials_storer(secret_identifier, userId, password, client=client):
+    SecretString=json.dumps({
+    "username":f"{userId}",
+    "password":f"{password}"
+})
     response = client.create_secret(
         Name=secret_identifier,
-        SecretString='''{
-    "username":"userId",
-    "password":"password"
-}'''
+        SecretString=SecretString
     )
     print(response['Name'])
 
@@ -28,7 +29,7 @@ def list_all_secrets():
         print(i['Name'])
 
 
-def secret_retriever(secret_identifier):
+def secret_retriever(secret_identifier, client):
     secret_name = secret_identifier
     try:
         get_secret_value_response = client.get_secret_value(
@@ -38,7 +39,7 @@ def secret_retriever(secret_identifier):
         raise e
 
     secret = get_secret_value_response['SecretString']
-    return secret
+    return json.loads(secret)
 
 
 def secret_delete(secret_identifier):

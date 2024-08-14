@@ -32,10 +32,10 @@ def test_extract(s3_resource):
     print(bucket)
     assert extract_from_db('test-bucket', s3_resource=s3_resource) == view_bucket_contents(bucket)
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 def test_get_secret(secretsmanager_client):
     credentials_storer('secret', 'bob', 'marley', secretsmanager_client)
-    assert secret_retriever('secret') == '''{
-    "username":"userId",
-    "password":"password"
-}'''
+    assert secret_retriever('secret', secretsmanager_client) == {
+    "username":"bob",
+    "password":"marley"
+}
