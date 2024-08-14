@@ -66,4 +66,5 @@ def extract_from_db_write_to_s3(bucket):
 
         print(s3_key)
     conn.close()
+    
     return extracted_json
