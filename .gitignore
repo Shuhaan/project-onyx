@@ -10,6 +10,7 @@ venv/
 *.tfstate*
 requirements.txt
 .env
+**/__pycache__/
 
 # should be deleted later
 .github

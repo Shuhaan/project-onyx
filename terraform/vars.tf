@@ -1,11 +1,16 @@
 variable "ingested_data_bucket" {
   type    = string
-  default = "onyx_totesys_ingested_data_bucket"
+  default = "onyx-totesys-ingested-data-bucket"
 }
 
 variable "processed_data_bucket" {
   type    = string
-  default = "onyx_processed_data_bucket"
+  default = "onyx-processed-data-bucket"
+}
+
+variable "lambda_code_bucket" {
+  type    = string
+  default = "onyx-lambda-code-bucket"
 }
 
 variable "extract_lambda" {
