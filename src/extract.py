@@ -1,5 +1,6 @@
 from src.connection import connect_to_db
-from utilities.utils import format_response
+from utilities.utils import format_response, log_message
+from botocore.exceptions import ClientError
 import logging
 import boto3
 from datetime import datetime
@@ -7,63 +8,63 @@ from pprint import pprint
 import json
 
 
-# logger = logging.getLogger("OnyxLogger")
-# logger.setLevel(logging.INFO)
-
-most_recent_extract = ""
+# Arif's logging function to be applied
 
 
-# def extract_from_db(bucket_name, s3_resource=boto3.resource('s3')):
-def extract_from_db_write_to_s3(bucket):
-    # bucket = s3_resource.Bucket(bucket_name)
+def extract_from_db_write_to_s3(bucket, s3_client=None):
+    if not s3_client:
+        s3_client = boto3.client("s3")
 
-    extract_time = datetime.now()
-    extract_year = extract_time.year
-    extract_month = extract_time.month
-    extract_day = extract_time.day
-    extract_hour = extract_time.hour
-    extract_minute = extract_time.minute
+    try:
+        conn = connect_to_db()
 
-    totesys_table_list = [
-        "address",
-        "design",
-        "transaction",
-        "sales_order",
-        "counterparty",
-        "payment",
-        "staff",
-        "purchase_order",
-        "payment_type",
-        "currency",
-        "department",
-    ]
+        date = datetime.now()
+        date_str = date.strftime("%Y/%m/%d/%H-%M")
 
-    conn = connect_to_db()
-    print(conn)
+        try:
+            last_extract_file = s3_client.get_object(
+                Bucket=bucket, Key="last_extract.txt"
+            )
+            last_extract = last_extract_file["Body"].read().decode("utf-8")
+        except:
+            last_extract = None
+            
+        
 
-    for table in totesys_table_list:
-        query = f"""SELECT * FROM {table}
-                    LIMIT 2 ;
-                    """
-        # logic required to check timestamps for updates
+        totesys_table_list = [
+            "address",
+            "design",
+            "transaction",
+            "sales_order",
+            "counterparty",
+            "payment",
+            "staff",
+            "purchase_order",
+            "payment_type",
+            "currency",
+            "department",
+        ]
 
-        response = conn.run(query)
-        columns = [col["name"] for col in conn.columns]
-        formatted_response = {table: format_response(columns, response)}
-        extracted_json = json.dumps(formatted_response, indent=4)
-        print(extracted_json)
+        for table in totesys_table_list:
+            query = f"SELECT * FROM {table};"
+            if last_extract:
+                query += f"WHERE last_updated > {last_extract};"
 
-        s3_key = f"""{table}/{extract_year}/
-                    {extract_month}/{extract_day}/
-                    {extract_hour}/{extract_minute}.json"""
-
-        most_recent_extract = s3_key
-
-        response = bucket.put_object(
-            Key="s3_key",
-            Body=extracted_json,
-        )
-
-        print(s3_key)
-    conn.close()
-    return extracted_json
+            response = conn.run(query)
+            columns = [col["name"] for col in conn.columns]
+            formatted_response = {table: format_response(columns, response)}
+            extracted_json = json.dumps(formatted_response, indent=4)
+            s3_key = f"{table}/{date_str}.json"
+            s3_client.put_object(Bucket=bucket, Key=s3_key, Body=extracted_json)
+            
+        store_last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
+        s3_client.put_object(
+            Bucket=bucket, 
+            Key="last_extract.txt", 
+            Body=store_last_extract)
+        
+    except ClientError as e:
+        name = __name__
+        log_message(name, "40", e.response["Error"]["Message"])
+    finally:
+        conn.close()
