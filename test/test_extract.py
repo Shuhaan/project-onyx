@@ -11,7 +11,7 @@ from utilities.utils_for_testing import (
     upload_to_s3,
     view_bucket_contents,
     credentials_storer,
-    secret_retriever
+    secret_retriever,
 )
 
 
@@ -38,14 +38,14 @@ def secretsmanager_client():
 
 @pytest.fixture(scope="function")
 def create_secrets(secretsmanager_client):
-    secret_string={
+    secret_string = {
         "username": os.getenv("Username"),
         "password": os.getenv("Password"),
         "host": os.getenv("Hostname"),
         "port": os.getenv("Port"),
-        "dbname": os.getenv("Database")
+        "dbname": os.getenv("Database"),
     }
-    secret=json.dumps(secret_string)
+    secret = json.dumps(secret_string)
     secretsmanager_client.create_secret(
         Name="project-onyx/totesys-db-login", SecretString=secret
     )
@@ -60,30 +60,51 @@ def test_get_secret(secretsmanager_client):
 
 
 class TestExtract:
-    def test_extract_writes_to_s3(self, s3_client, create_secrets):
-        s3_client.create_bucket(Bucket="bucket", CreateBucketConfiguration={
-            'LocationConstraint': 'eu-west-2',
-            'Location': {
-                'Type': 'AvailabilityZone',
-                'Name': 'string'
-            }})
-        result = extract_from_db_write_to_s3(s3_client, "bucket")
-        expected_list_bucket = s3_client.list_objects(Bucket="bucket")['Contents']
-        expected = [bucket["Key"] for bucket in expected_list_bucket]
-        print(result)
-        assert result == expected
-    
     @pytest.mark.skip()
-    def test_initial_extract_entire_db_into_s3(self, s3_client, create_secrets):
-        s3_client.create_bucket(Bucket="bucket", CreateBucketConfiguration={
-            'LocationConstraint': 'eu-west-2',
-            'Location': {
-                'Type': 'AvailabilityZone',
-                'Name': 'string'
-            }})
+    def test_extract_writes_all_tables_to_s3_as_directories(
+        self, s3_client, create_secrets
+    ):
+        s3_client.create_bucket(
+            Bucket="bucket",
+            CreateBucketConfiguration={
+                "LocationConstraint": "eu-west-2",
+                "Location": {"Type": "AvailabilityZone", "Name": "string"},
+            },
+        )
+        extract_from_db_write_to_s3("bucket", s3_client)
+
+        result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
+        result = [bucket["Key"] for bucket in result_list_bucket]
+        print(result)
+        expected = [
+            "address",
+            "design",
+            "transaction",
+            "sales_order",
+            "counterparty",
+            "payment",
+            "staff",
+            "purchase_order",
+            "payment_type",
+            "currency",
+            "department",
+        ]
+        for table in expected:
+            assert table in result
+
+    @pytest.mark.skip()
+    def test_extract_writes_jsons_into_s3_with_correct_data_from_db(
+        self, s3_client, create_secrets
+    ):
+        s3_client.create_bucket(
+            Bucket="bucket",
+            CreateBucketConfiguration={
+                "LocationConstraint": "eu-west-2",
+                "Location": {"Type": "AvailabilityZone", "Name": "string"},
+            },
+        )
         result = extract_from_db_write_to_s3(s3_client, "bucket")
-        expected_list_bucket = s3_client.list_objects(Bucket="bucket")['Contents']
+        expected_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         expected = [bucket["Key"] for bucket in expected_list_bucket]
         print(result)
         assert result == expected
-
