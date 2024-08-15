@@ -55,17 +55,8 @@ def create_secrets(secretsmanager_client):
         Name="project-onyx/totesys-db-login", SecretString=secret
     )
 
-@pytest.mark.skip()
-def test_get_secret(secretsmanager_client):
-    credentials_storer("secret", "bob", "marley", secretsmanager_client)
-    assert secret_retriever("secret", secretsmanager_client) == {
-        "username": "bob",
-        "password": "marley",
-    }
-
 
 class TestExtract:
-    # @pytest.mark.skip()
     def test_extract_writes_all_tables_to_s3_as_directories(
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
@@ -90,7 +81,6 @@ class TestExtract:
         for folder, table in zip(result, expected):
             assert table in folder
 
-    # @pytest.mark.skip()
     def test_extract_writes_jsons_into_s3_with_correct_data_from_db(
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
@@ -99,11 +89,9 @@ class TestExtract:
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
         for key in result:
-            if '.txt' not in key:
-                json_file = s3_client.get_object(
-                        Bucket='bucket', Key=key
-                    )
-                json_contents = json_file['Body'].read().decode('utf-8')
+            if ".txt" not in key:
+                json_file = s3_client.get_object(Bucket="bucket", Key=key)
+                json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
                 for folder in content:
-                    assert content[folder][0]['created_at']
+                    assert content[folder][0]["created_at"]

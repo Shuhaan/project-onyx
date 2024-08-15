@@ -7,7 +7,6 @@ import boto3
 def connect_to_db():
     try:
         credentials = get_secret()
-        print(credentials)
         return Connection(
             user=credentials["username"],
             password=credentials["password"],
