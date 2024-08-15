@@ -37,8 +37,14 @@ resource "aws_iam_role" "extract_lambda_role" {
 # Define
 data "aws_iam_policy_document" "s3_extract_data_policy_doc" {
   statement {
-    actions = ["s3:*"]
-    resources = [aws_s3_bucket.ingested_data_bucket.arn]
+    actions = [
+      "s3:PutObject", 
+      "s3:ListBucket"           
+    ]
+    resources = [
+      "${aws_s3_bucket.ingested_data_bucket.arn}",      
+      "${aws_s3_bucket.ingested_data_bucket.arn}/*"       
+    ]
     effect = "Allow"
   }
 }
@@ -64,12 +70,18 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_extract_write_policy_attach
 data "aws_iam_policy_document" "s3_transform_data_policy_doc" {
   statement {
     actions = ["s3:GetObject"]
-    resources = [aws_s3_bucket.ingested_data_bucket.arn]
+    resources = ["${aws_s3_bucket.ingested_data_bucket.arn}/*"]
     effect = "Allow"
   }
   statement {
-    actions = ["s3:PutObject"]
-    resources = [aws_s3_bucket.onyx_processed_bucket.arn]
+    actions = [
+      "s3:PutObject", 
+      "s3:ListBucket"           
+    ]
+    resources = [
+          "${aws_s3_bucket.onyx_processed_bucket.arn}",
+          "${aws_s3_bucket.onyx_processed_bucket.arn}/*"       
+    ]
     effect = "Allow"
   }
 }
@@ -97,16 +109,6 @@ data "aws_iam_policy_document" "extract_cw_document" {
   statement {
     actions = [ 
       "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
-    ]
-    resources = ["*"]  
-
-    effect = "Allow"
-  }
-
-  statement {
-    actions   = [
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
@@ -142,20 +144,10 @@ resource "aws_iam_role_policy_attachment" "extract_lambda_cw_policy_attachment" 
 #       "logs:CreateLogStream",
 #       "logs:PutLogEvents"
 #     ]
-#     resources = ["*"]  
-
-#     effect = "Allow"
-#   }
-
-#   statement {
-#     actions   = [
-#       "logs:CreateLogStream",
-#       "logs:PutLogEvents"
-#     ]
 #     resources = [
 #       "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.transform_lambda}:*"
 #     ]
-#     effect    = "Allow"
+#     effect = "Allow"
 #   }
 # }
 
@@ -180,7 +172,7 @@ resource "aws_iam_role_policy_attachment" "extract_lambda_cw_policy_attachment" 
 # Define
 data "aws_iam_policy_document" "secrets_manager_policy_doc" {
   statement {
-    actions = ["secretsmanager:*"]
+    actions = ["secretsmanager:GetSecretValue"]
     resources = ["*"]
     effect = "Allow"
   }
