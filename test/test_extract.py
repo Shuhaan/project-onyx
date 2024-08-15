@@ -65,7 +65,7 @@ def test_get_secret(secretsmanager_client):
 
 
 class TestExtract:
-    @pytest.mark.skip()
+    # @pytest.mark.skip()
     def test_extract_writes_all_tables_to_s3_as_directories(
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
