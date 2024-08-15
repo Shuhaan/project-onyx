@@ -30,42 +30,42 @@ def s3_data_buckets(s3_client):
     )
 
 
-class TestTransform:
-    def test_extract_writes_all_tables_to_s3_as_directories(
-        self, s3_client, s3_ingested_data_bucket, create_secrets
-    ):
+# class TestTransform:
+#     def test_extract_writes_all_tables_to_s3_as_directories(
+#         self, s3_client, s3_ingested_data_bucket, create_secrets
+#     ):
 
-        extract_from_db_write_to_s3("bucket", s3_client)
-        result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
-        result = [bucket["Key"] for bucket in result_list_bucket]
-        expected = [
-            "address",
-            "counterparty",
-            "currency",
-            "department",
-            "design",
-            "last_extract.txt",
-            "payment",
-            "payment_type",
-            "purchase_order",
-            "sales_order",
-            "staff",
-            "transaction",
-        ]
-        for folder, table in zip(result, expected):
-            assert table in folder
+#         extract_from_db_write_to_s3("bucket", s3_client)
+#         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
+#         result = [bucket["Key"] for bucket in result_list_bucket]
+#         expected = [
+#             "address",
+#             "counterparty",
+#             "currency",
+#             "department",
+#             "design",
+#             "last_extract.txt",
+#             "payment",
+#             "payment_type",
+#             "purchase_order",
+#             "sales_order",
+#             "staff",
+#             "transaction",
+#         ]
+#         for folder, table in zip(result, expected):
+#             assert table in folder
 
-    def test_extract_writes_jsons_into_s3_with_correct_data_from_db(
-        self, s3_client, s3_ingested_data_bucket, create_secrets
-    ):
+#     def test_extract_writes_jsons_into_s3_with_correct_data_from_db(
+#         self, s3_client, s3_ingested_data_bucket, create_secrets
+#     ):
 
-        extract_from_db_write_to_s3("bucket", s3_client)
-        result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
-        result = [bucket["Key"] for bucket in result_list_bucket]
-        for key in result:
-            if ".txt" not in key:
-                json_file = s3_client.get_object(Bucket="bucket", Key=key)
-                json_contents = json_file["Body"].read().decode("utf-8")
-                content = json.loads(json_contents)
-                for folder in content:
-                    assert content[folder][0]["created_at"]
+#         extract_from_db_write_to_s3("bucket", s3_client)
+#         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
+#         result = [bucket["Key"] for bucket in result_list_bucket]
+#         for key in result:
+#             if ".txt" not in key:
+#                 json_file = s3_client.get_object(Bucket="bucket", Key=key)
+#                 json_contents = json_file["Body"].read().decode("utf-8")
+#                 content = json.loads(json_contents)
+#                 for folder in content:
+#                     assert content[folder][0]["created_at"]

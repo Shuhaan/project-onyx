@@ -14,7 +14,6 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
         s3_client = boto3.client("s3")
 
     try:
-        global conn
         conn = connect_to_db()
 
         date = datetime.now()
