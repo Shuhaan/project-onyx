@@ -6,3 +6,7 @@ import os
 from dotenv import load_dotenv
 from src.extract import extract_from_db_write_to_s3
 from pprint import pprint
+
+
+def transform(ingested_data_bucket, processed_data_bucket):
+    pass

@@ -2,8 +2,13 @@ import pytest
 import json
 from moto import mock_aws
 import boto3
+import os
+from dotenv import load_dotenv
+from src.extract import extract_from_db_write_to_s3
+from src.transform import transform
 
 
+load_dotenv()
 
 
 @pytest.fixture()
@@ -30,42 +35,52 @@ def s3_data_buckets(s3_client):
     )
 
 
-# class TestTransform:
-#     def test_extract_writes_all_tables_to_s3_as_directories(
-#         self, s3_client, s3_ingested_data_bucket, create_secrets
-#     ):
+@pytest.fixture()
+def secretsmanager_client():
+    with mock_aws():
+        yield boto3.client("secretsmanager")
 
-#         extract_from_db_write_to_s3("bucket", s3_client)
-#         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
-#         result = [bucket["Key"] for bucket in result_list_bucket]
-#         expected = [
-#             "address",
-#             "counterparty",
-#             "currency",
-#             "department",
-#             "design",
-#             "last_extract.txt",
-#             "payment",
-#             "payment_type",
-#             "purchase_order",
-#             "sales_order",
-#             "staff",
-#             "transaction",
-#         ]
-#         for folder, table in zip(result, expected):
-#             assert table in folder
 
-#     def test_extract_writes_jsons_into_s3_with_correct_data_from_db(
-#         self, s3_client, s3_ingested_data_bucket, create_secrets
-#     ):
+@pytest.fixture(scope="function")
+def create_secrets(secretsmanager_client):
+    secret_string = {
+        "username": os.getenv("Username"),
+        "password": os.getenv("Password"),
+        "host": os.getenv("Hostname"),
+        "port": os.getenv("Port"),
+        "dbname": os.getenv("Database"),
+    }
+    secret = json.dumps(secret_string)
+    secretsmanager_client.create_secret(
+        Name="project-onyx/totesys-db-login", SecretString=secret
+    )
 
-#         extract_from_db_write_to_s3("bucket", s3_client)
-#         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
-#         result = [bucket["Key"] for bucket in result_list_bucket]
-#         for key in result:
-#             if ".txt" not in key:
-#                 json_file = s3_client.get_object(Bucket="bucket", Key=key)
-#                 json_contents = json_file["Body"].read().decode("utf-8")
-#                 content = json.loads(json_contents)
-#                 for folder in content:
-#                     assert content[folder][0]["created_at"]
+
+@pytest.fixture()
+def write_files_to_ingested_date_bucket(create_secrets, s3_data_buckets):
+    extract_from_db_write_to_s3("onyx-totesys-ingested-data-bucket")
+
+
+class TestTransform:
+    def test_transform_puts_files_in_processed_data_bucket(
+        self, s3_client, write_files_to_ingested_date_bucket
+    ):
+
+        transform("onyx-totesys-ingested-data-bucket", "onyx-processed-data-bucket")
+
+        result_list_processed_data_bucket = s3_client.list_objects(Bucket="onyx-processed-data-bucket")["Contents"]
+        result = [bucket["Key"] for bucket in result_list_processed_data_bucket]
+
+        expected = [
+            'dim_staff',
+            'dim_location',
+            'dim_design',
+            'dim_date',
+            'dim_currency',
+            'dim_counterparty',
+            'fact_sales_order',
+            'last_transform.txt'
+        ]
+
+        for folder, table in zip(result, expected):
+            assert table in folder
