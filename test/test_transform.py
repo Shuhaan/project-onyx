@@ -8,9 +8,6 @@ from src.extract import extract_from_db_write_to_s3
 from src.transform import transform
 
 
-load_dotenv()
-
-
 @pytest.fixture()
 def s3_client():
     with mock_aws():
@@ -43,6 +40,7 @@ def secretsmanager_client():
 
 @pytest.fixture(scope="function")
 def create_secrets(secretsmanager_client):
+    load_dotenv()
     secret_string = {
         "username": os.getenv("Username"),
         "password": os.getenv("Password"),
@@ -68,18 +66,20 @@ class TestTransform:
 
         transform("onyx-totesys-ingested-data-bucket", "onyx-processed-data-bucket")
 
-        result_list_processed_data_bucket = s3_client.list_objects(Bucket="onyx-processed-data-bucket")["Contents"]
+        result_list_processed_data_bucket = s3_client.list_objects(
+            Bucket="onyx-processed-data-bucket"
+        )["Contents"]
         result = [bucket["Key"] for bucket in result_list_processed_data_bucket]
 
         expected = [
-            'dim_staff',
-            'dim_location',
-            'dim_design',
-            'dim_date',
-            'dim_currency',
-            'dim_counterparty',
-            'fact_sales_order',
-            'last_transform.txt'
+            "dim_staff",
+            "dim_location",
+            "dim_design",
+            "dim_date",
+            "dim_currency",
+            "dim_counterparty",
+            "fact_sales_order",
+            "last_transform.txt",
         ]
 
         for folder, table in zip(result, expected):
