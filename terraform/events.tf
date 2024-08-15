@@ -34,7 +34,7 @@ resource "aws_cloudwatch_log_metric_filter" "extract_error_detection" {
   depends_on = [ aws_iam_role.extract_lambda_role ]
 }
 resource "aws_cloudwatch_log_group" "extract_log" {
-  name = "/aws/lambda/extract"
+  name_prefix = "/aws/lambda/extract"
   
 }
 # Create an SNS Topic for email notifications
