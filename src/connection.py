@@ -1,12 +1,13 @@
 from pg8000.native import Connection
 from pg8000.exceptions import DatabaseError
-from utilities.utils import get_secret
+from src.utils import get_secret
 import boto3
 
 
 def connect_to_db():
     try:
         credentials = get_secret()
+        print(credentials)
         return Connection(
             user=credentials["username"],
             password=credentials["password"],

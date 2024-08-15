@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 from src.extract import extract_from_db_write_to_s3
 from pprint import pprint
-from utilities.utils_for_testing import (
+from utils_for_testing import (
     create_s3_bucket,
     upload_to_s3,
     view_bucket_contents,
@@ -27,12 +27,12 @@ def s3_client():
 @pytest.fixture()
 def s3_ingested_data_bucket(s3_client):
     s3_client.create_bucket(
-            Bucket="bucket",
-            CreateBucketConfiguration={
-                "LocationConstraint": "eu-west-2",
-                "Location": {"Type": "AvailabilityZone", "Name": "string"},
-            },
-        )
+        Bucket="bucket",
+        CreateBucketConfiguration={
+            "LocationConstraint": "eu-west-2",
+            "Location": {"Type": "AvailabilityZone", "Name": "string"},
+        },
+    )
 
 
 @pytest.fixture()
@@ -69,7 +69,7 @@ class TestExtract:
     def test_extract_writes_all_tables_to_s3_as_directories(
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
-        
+
         extract_from_db_write_to_s3("bucket", s3_client)
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
@@ -85,16 +85,16 @@ class TestExtract:
             "purchase_order",
             "sales_order",
             "staff",
-            "transaction"         
+            "transaction",
         ]
-        for folder,table in zip(result,expected):
+        for folder, table in zip(result, expected):
             assert table in folder
 
     # @pytest.mark.skip()
     def test_extract_writes_jsons_into_s3_with_correct_data_from_db(
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
-        
+
         extract_from_db_write_to_s3("bucket", s3_client)
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
@@ -107,5 +107,3 @@ class TestExtract:
                 content = json.loads(json_contents)
                 for folder in content:
                     assert content[folder][0]['created_at']
-                # assert isinstance(content, dict)
-

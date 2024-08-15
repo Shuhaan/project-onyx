@@ -1,5 +1,5 @@
 from src.connection import connect_to_db
-from utilities.utils import format_response, log_message
+from src.utils import format_response, log_message
 from botocore.exceptions import ClientError
 import boto3
 from datetime import datetime
@@ -14,6 +14,7 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
         s3_client = boto3.client("s3")
 
     try:
+        global conn
         conn = connect_to_db()
 
         date = datetime.now()
@@ -26,7 +27,7 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             last_extract = last_extract_file["Body"].read().decode("utf-8")
         except:
             last_extract = None
-            
+
         totesys_table_list = [
             "address",
             "design",
@@ -53,13 +54,12 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             extracted_json = json.dumps(formatted_response, indent=4)
             s3_key = f"{table}/{date_str}.json"
             s3_client.put_object(Bucket=bucket, Key=s3_key, Body=extracted_json)
-            
+
         store_last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
         s3_client.put_object(
-            Bucket=bucket, 
-            Key="last_extract.txt", 
-            Body=store_last_extract)
-        
+            Bucket=bucket, Key="last_extract.txt", Body=store_last_extract
+        )
+
     except ClientError as e:
         name = __name__
         log_message(name, "40", e.response["Error"]["Message"])
