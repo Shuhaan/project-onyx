@@ -1,5 +1,6 @@
 import json
 import boto3
+from botocore.exceptions import ClientError
 from datetime import datetime
 import logging
 from connection import connect_to_db
