@@ -1,9 +1,20 @@
 import json
 import boto3
 from datetime import datetime
+import logging
 from connection import connect_to_db
 from utils import format_response, log_message
-from botocore.exceptions import ClientError
+
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,  # Set the minimum logging level
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    force=True,
+)
+
+# Create a logger instance
+logger = logging.getLogger(__name__)
 
 
 def lambda_handler(event, context):
@@ -29,7 +40,7 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             )
             last_extract = last_extract_file["Body"].read().decode("utf-8")
             log_message(__name__, 20, f"Extract function last ran at {last_extract}")
-        except:
+        except s3_client.exceptions.NoSuchKey:
             last_extract = None
             log_message(__name__, 20, "Extract function running for the first time")
 

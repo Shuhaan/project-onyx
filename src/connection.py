@@ -1,6 +1,6 @@
 from pg8000.native import Connection
 from pg8000.exceptions import DatabaseError
-from src.utils import get_secret
+from utils import get_secret
 import boto3
 
 
