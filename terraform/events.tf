@@ -23,7 +23,7 @@ resource "aws_lambda_permission" "extract_permission" {
 resource "aws_cloudwatch_log_metric_filter" "extract_error_detection" {
   name           = "ExtractErrorDetection"
   pattern        = "ERROR"
-  log_group_name = "/aws/lambda/extract"
+  log_group_name = aws_cloudwatch_log_group.extract_log.name
 
   metric_transformation {
     name      = "ExtractErrorCount"
@@ -33,7 +33,10 @@ resource "aws_cloudwatch_log_metric_filter" "extract_error_detection" {
 
   depends_on = [ aws_iam_role.extract_lambda_role ]
 }
-
+resource "aws_cloudwatch_log_group" "extract_log" {
+  name = "/aws/lambda/extract"
+  
+}
 # Create an SNS Topic for email notifications
 resource "aws_sns_topic" "alert_topic" {
   name = "extract-error-alerts"

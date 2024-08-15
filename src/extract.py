@@ -1,10 +1,8 @@
 from src.connection import connect_to_db
 from utilities.utils import format_response, log_message
 from botocore.exceptions import ClientError
-import logging
 import boto3
 from datetime import datetime
-from pprint import pprint
 import json
 
 
