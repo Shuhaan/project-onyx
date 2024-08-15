@@ -70,7 +70,9 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_extract_write_policy_attach
 data "aws_iam_policy_document" "s3_transform_data_policy_doc" {
   statement {
     actions = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.ingested_data_bucket.arn}/*"]
+    resources = [
+      "${aws_s3_bucket.ingested_data_bucket.arn}",
+      "${aws_s3_bucket.ingested_data_bucket.arn}/*"]
     effect = "Allow"
   }
   statement {
