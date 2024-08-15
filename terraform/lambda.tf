@@ -34,6 +34,11 @@ data "archive_file" "extract_lambda" {
     filename          = "${basename(local.source_files[1])}"
     content           = "${data.template_file.t_file.1.rendered}"
   }
+
+  source {
+    filename          = "${basename(local.source_files[2])}"
+    content           = "${data.template_file.t_file.2.rendered}"
+  }
 }
 
 # increased timeout to 60 seconds and added layer plus environment
@@ -64,9 +69,9 @@ resource "aws_lambda_function" "extract_handler" {
 #define variables
 locals {
   layer_path        = "../layer"
-  layer_zip_name    = "layer.zip"
+  layer_zip_name    = "../layer.zip"
   layer_name        = "extract_layer"
-  requirements_name = "requirements.txt"
+  requirements_name = "requirements.in"
   requirements_path = "${path.module}/../${local.requirements_name}"
 }
 
@@ -75,14 +80,15 @@ resource "null_resource" "lambda_layer" {
   triggers = {
     requirements = filesha1(local.requirements_path)
   }
+
   # the command to install python and dependencies to the machine and zips
   provisioner "local-exec" {
     command = <<EOT
-      cd ${local.layer_path}
+      cd ../layer
       rm -rf python
       mkdir python
-      pip install -r ${local.requirements_name} -t python/
-      zip -r ${local.layer_zip_name} python/
+      pip install -r ../requirements.in -t python/
+      zip -r ../layer.zip python/
     EOT
   }
 }
