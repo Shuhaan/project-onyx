@@ -11,6 +11,6 @@ venv/
 requirements.txt
 .env
 **/__pycache__/
-
+layer/*
 # should be deleted later
 .github
