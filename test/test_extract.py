@@ -79,7 +79,7 @@ class TestExtract:
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
         for key in result:
-            if ".txt" not in key:
+            if not key.endswith(".txt"):  # Filter out .txt files
                 json_file = s3_client.get_object(Bucket="bucket", Key=key)
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
