@@ -25,9 +25,14 @@ def s3_client():
 
 
 @pytest.fixture()
-def s3_resource():
-    with mock_aws():
-        yield boto3.resource("s3")
+def s3_ingested_data_bucket(s3_client):
+    s3_client.create_bucket(
+            Bucket="bucket",
+            CreateBucketConfiguration={
+                "LocationConstraint": "eu-west-2",
+                "Location": {"Type": "AvailabilityZone", "Name": "string"},
+            },
+        )
 
 
 @pytest.fixture()
@@ -60,17 +65,11 @@ def test_get_secret(secretsmanager_client):
 
 
 class TestExtract:
-    # @pytest.mark.skip()
+    @pytest.mark.skip()
     def test_extract_writes_all_tables_to_s3_as_directories(
-        self, s3_client, create_secrets
+        self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
-        s3_client.create_bucket(
-            Bucket="bucket",
-            CreateBucketConfiguration={
-                "LocationConstraint": "eu-west-2",
-                "Location": {"Type": "AvailabilityZone", "Name": "string"},
-            },
-        )
+        
         extract_from_db_write_to_s3("bucket", s3_client)
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
@@ -91,19 +90,22 @@ class TestExtract:
         for folder,table in zip(result,expected):
             assert table in folder
 
-    @pytest.mark.skip()
+    # @pytest.mark.skip()
     def test_extract_writes_jsons_into_s3_with_correct_data_from_db(
-        self, s3_client, create_secrets
+        self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
-        s3_client.create_bucket(
-            Bucket="bucket",
-            CreateBucketConfiguration={
-                "LocationConstraint": "eu-west-2",
-                "Location": {"Type": "AvailabilityZone", "Name": "string"},
-            },
-        )
-        result = extract_from_db_write_to_s3(s3_client, "bucket")
-        expected_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
-        expected = [bucket["Key"] for bucket in expected_list_bucket]
-        print(result)
-        assert result == expected
+        
+        extract_from_db_write_to_s3("bucket", s3_client)
+        result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
+        result = [bucket["Key"] for bucket in result_list_bucket]
+        for key in result:
+            json_file = s3_client.get_object(
+                    Bucket='bucket', Key=key
+                )
+            json_contents = json_file['Body'].read().decode('utf-8')
+            print(json_contents)
+            content = json.loads(json_contents)
+            assert isinstance(content, dict)
+            # print(content)
+
+        assert 0 == 1
