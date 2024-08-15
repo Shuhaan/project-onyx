@@ -60,7 +60,7 @@ def test_get_secret(secretsmanager_client):
 
 
 class TestExtract:
-    @pytest.mark.skip()
+    # @pytest.mark.skip()
     def test_extract_writes_all_tables_to_s3_as_directories(
         self, s3_client, create_secrets
     ):
@@ -72,25 +72,24 @@ class TestExtract:
             },
         )
         extract_from_db_write_to_s3("bucket", s3_client)
-
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
-        print(result)
         expected = [
             "address",
-            "design",
-            "transaction",
-            "sales_order",
             "counterparty",
-            "payment",
-            "staff",
-            "purchase_order",
-            "payment_type",
             "currency",
             "department",
+            "design",
+            "last_extract.txt",
+            "payment",
+            "payment_type",
+            "purchase_order",
+            "sales_order",
+            "staff",
+            "transaction"         
         ]
-        for table in expected:
-            assert table in result
+        for folder,table in zip(result,expected):
+            assert table in folder
 
     @pytest.mark.skip()
     def test_extract_writes_jsons_into_s3_with_correct_data_from_db(

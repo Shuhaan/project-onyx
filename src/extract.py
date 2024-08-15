@@ -28,6 +28,8 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             last_extract = last_extract_file["Body"].read().decode("utf-8")
         except:
             last_extract = None
+            
+        
 
         totesys_table_list = [
             "address",
@@ -44,8 +46,7 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
         ]
 
         for table in totesys_table_list:
-            query = f"SELECT * FROM {table} "
-
+            query = f"SELECT * FROM {table};"
             if last_extract:
                 query += f"WHERE last_updated > {last_extract};"
 
@@ -53,16 +54,15 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             columns = [col["name"] for col in conn.columns]
             formatted_response = {table: format_response(columns, response)}
             extracted_json = json.dumps(formatted_response, indent=4)
-
             s3_key = f"{table}/{date_str}.json"
-
-            last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
-
-            s3_client.put_object(
-                Bucket=bucket, Key="last_extract.txt", Body=last_extract
-            )
-
             s3_client.put_object(Bucket=bucket, Key=s3_key, Body=extracted_json)
+            
+        store_last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
+        s3_client.put_object(
+            Bucket=bucket, 
+            Key="last_extract.txt", 
+            Body=store_last_extract)
+        
     except ClientError as e:
         name = __name__
         log_message(name, "40", e.response["Error"]["Message"])
