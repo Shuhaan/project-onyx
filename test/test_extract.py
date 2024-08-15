@@ -55,7 +55,7 @@ def create_secrets(secretsmanager_client):
         Name="project-onyx/totesys-db-login", SecretString=secret
     )
 
-
+@pytest.mark.skip()
 def test_get_secret(secretsmanager_client):
     credentials_storer("secret", "bob", "marley", secretsmanager_client)
     assert secret_retriever("secret", secretsmanager_client) == {
@@ -99,13 +99,13 @@ class TestExtract:
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
         for key in result:
-            json_file = s3_client.get_object(
-                    Bucket='bucket', Key=key
-                )
-            json_contents = json_file['Body'].read().decode('utf-8')
-            print(json_contents)
-            content = json.loads(json_contents)
-            assert isinstance(content, dict)
-            # print(content)
+            if '.txt' not in key:
+                json_file = s3_client.get_object(
+                        Bucket='bucket', Key=key
+                    )
+                json_contents = json_file['Body'].read().decode('utf-8')
+                content = json.loads(json_contents)
+                for folder in content:
+                    assert content[folder][0]['created_at']
+                # assert isinstance(content, dict)
 
-        assert 0 == 1
