@@ -1,7 +1,7 @@
 resource "aws_cloudwatch_event_rule" "extract_scheduler" {
   name                = "extract_lambda_scheduler"
   description         = "Invoke extract lambda function every 5 mins and upload results to CloudWatch"
-  schedule_expression = "rate(5 minutes)"
+  schedule_expression = "rate(10 minutes)"
   depends_on          = [aws_lambda_function.extract_handler]
 }
 
@@ -34,7 +34,7 @@ resource "aws_cloudwatch_log_metric_filter" "extract_error_detection" {
   depends_on = [ aws_iam_role.extract_lambda_role ]
 }
 resource "aws_cloudwatch_log_group" "extract_log" {
-  name = "/aws/lambda/extract"
+  name_prefix = "/aws/lambda/extract"
   
 }
 # Create an SNS Topic for email notifications
