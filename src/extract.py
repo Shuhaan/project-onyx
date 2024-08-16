@@ -60,6 +60,8 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             Bucket=bucket, Key="last_extract.txt", Body=store_last_extract
         )
 
+        # add check to compare new data with old data and update if there are updates.
+
     except ClientError as e:
         name = __name__
         log_message(name, "40", e.response["Error"]["Message"])
