@@ -68,10 +68,10 @@ resource "aws_lambda_function" "extract_handler" {
 
 #define variables
 locals {
-  layer_path        = "../layer"
-  layer_zip_name    = "../layer.zip"
+  layer_path        = "layer"
+  layer_zip_name    = "layer.zip"
   layer_name        = "extract_layer"
-  requirements_name = "requirements.in"
+  requirements_name = "requirements.lambda"
   requirements_path = "${path.module}/../${local.requirements_name}"
 }
 
@@ -83,13 +83,14 @@ resource "null_resource" "lambda_layer" {
 
   # the command to install python and dependencies to the machine and zips
   provisioner "local-exec" {
-    command = <<EOT
-      cd ../layer
+    command = <<EOF
+      cd layer
       rm -rf python
       mkdir python
-      pip install -r ../requirements.in -t python/
+      pip install -r ../requirements.lambda -t python/
       zip -r ../layer.zip python/
-    EOT
+    EOF
+    working_dir = "${path.module}/.."
   }
 }
 
