@@ -61,7 +61,7 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
         for table in totesys_table_list:
             query = f"SELECT * FROM {table} "
             if last_extract:
-                query += f"WHERE last_updated > '{last_extract}';"
+                query += f"WHERE last_updated > '{last_extract}'"
             query += ";"
             response = conn.run(query)
             columns = [col["name"] for col in conn.columns]

@@ -65,11 +65,12 @@ class TestTransform:
     ):
 
         transform("onyx-totesys-ingested-data-bucket", "onyx-processed-data-bucket")
-
+        print(1)
         result_list_processed_data_bucket = s3_client.list_objects(
             Bucket="onyx-processed-data-bucket"
         )["Contents"]
         result = [bucket["Key"] for bucket in result_list_processed_data_bucket]
+        print(result)
 
         expected = [
             "dim_staff",
@@ -82,5 +83,5 @@ class TestTransform:
             "last_transform.txt",
         ]
 
-        for folder, table in zip(result, expected):
-            assert table in folder
+        for table in expected:
+            assert any([folder.startswith(table) for folder in result])

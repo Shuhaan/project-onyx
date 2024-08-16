@@ -53,23 +53,24 @@ class TestExtract:
 
         extract_from_db_write_to_s3("bucket", s3_client)
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
-        result = [bucket["Key"] for bucket in result_list_bucket]
+        result = [file_data["Key"] for file_data in result_list_bucket]
         expected = [
-            "address",
             "counterparty",
             "currency",
             "department",
             "design",
-            "last_extract.txt",
-            "payment",
-            "payment_type",
-            "purchase_order",
-            "sales_order",
             "staff",
+            "sales_order",
+            "address",
+            "payment",
+            "purchase_order",
+            "payment_type",
             "transaction",
+            "last_extract",
         ]
-        for folder, table in zip(result, expected):
-            assert table in folder
+
+        for table in expected:
+            assert any([folder.startswith(table) for folder in result])
 
     def test_extract_writes_jsons_into_s3_with_correct_data_from_db(
         self, s3_client, s3_ingested_data_bucket, create_secrets
