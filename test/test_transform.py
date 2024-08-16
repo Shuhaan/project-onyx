@@ -42,11 +42,11 @@ def secretsmanager_client():
 def create_secrets(secretsmanager_client):
     load_dotenv()
     secret_string = {
-        "username": os.getenv("Username"),
-        "password": os.getenv("Password"),
-        "host": os.getenv("Hostname"),
-        "port": os.getenv("Port"),
-        "dbname": os.getenv("Database"),
+        "USERNAME": os.getenv("USERNAME"),
+        "PASSWORD": os.getenv("PASSWORD"),
+        "HOST": os.getenv("HOST"),
+        "PORT": os.getenv("PORT"),
+        "DBNAME": os.getenv("DATABASE"),
     }
     secret = json.dumps(secret_string)
     secretsmanager_client.create_secret(
