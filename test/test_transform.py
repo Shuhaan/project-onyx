@@ -65,7 +65,6 @@ class TestTransform:
     ):
 
         transform("onyx-totesys-ingested-data-bucket", "onyx-processed-data-bucket")
-        print(1)
         result_list_processed_data_bucket = s3_client.list_objects(
             Bucket="onyx-processed-data-bucket"
         )["Contents"]
