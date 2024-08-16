@@ -4,14 +4,13 @@
 # data "archive_file" "extract_lambda" {
 #   type                = "zip"
 #   output_file_mode    = "0666"
-#   source_file         = "${path.module}/../src/extract.py"
-#   source_file         = "${path.module}/../utilities/utils.py"
+#   source_dir          = "${path.module}/../src"
 #   output_path         = "${path.module}/../extract.zip"
 #   excludes            = ["${path.module}/../transform.py"]
 # }
 
 locals {
-  source_files        = ["${path.module}/../src/extract.py", "${path.module}/../utilities/utils.py", "${path.module}/../src/connection.py"]
+  source_files        = ["${path.module}/../src/connection.py", "${path.module}/../src/utils.py", "${path.module}/../src/extract.py"]
 }
 
 data "template_file" "t_file" {
@@ -39,6 +38,7 @@ data "archive_file" "extract_lambda" {
     filename          = "${basename(local.source_files[2])}"
     content           = "${data.template_file.t_file.2.rendered}"
   }
+
 }
 
 # increased timeout to 60 seconds and added layer plus environment

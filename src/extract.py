@@ -1,21 +1,36 @@
-from src.connection import connect_to_db
-from src.utils import format_response, log_message
-from botocore.exceptions import ClientError
-import boto3
-from datetime import datetime
 import json
+import boto3
+from botocore.exceptions import ClientError
+from datetime import datetime
+import logging
+from connection import connect_to_db
+from utils import format_response, log_message
 
 
-# Arif's logging function to be applied
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,  # Set the minimum logging level
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    force=True,
+)
+
+# Create a logger instance
+logger = logging.getLogger(__name__)
+
+
+def lambda_handler(event, context):
+    log_message(__name__, 10, "Entered lambda_handler")
+    extract_from_db_write_to_s3("onyx-totesys-ingested-data-bucket")
 
 
 def extract_from_db_write_to_s3(bucket, s3_client=None):
+    log_message(__name__, 10, "Entered extract function")
     if not s3_client:
         s3_client = boto3.client("s3")
-
+    conn = None
     try:
-        global conn
         conn = connect_to_db()
+        log_message(__name__, 20, "Connection to DB made")
 
         date = datetime.now()
         date_str = date.strftime("%Y/%m/%d/%H-%M")
@@ -25,8 +40,10 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
                 Bucket=bucket, Key="last_extract.txt"
             )
             last_extract = last_extract_file["Body"].read().decode("utf-8")
-        except:
+            log_message(__name__, 20, f"Extract function last ran at {last_extract}")
+        except s3_client.exceptions.NoSuchKey:
             last_extract = None
+            log_message(__name__, 20, "Extract function running for the first time")
 
         totesys_table_list = [
             "address",
@@ -41,7 +58,6 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             "currency",
             "department",
         ]
-
         for table in totesys_table_list:
             query = f"SELECT * FROM {table} "
             if last_extract:
@@ -56,15 +72,18 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             extracted_json = json.dumps(formatted_response, indent=4)
             s3_key = f"{table}/{date_str}.json"
             s3_client.put_object(Bucket=bucket, Key=s3_key, Body=extracted_json)
-
+            log_message(__name__, 20, f"{s3_key} was written to {bucket}")
         store_last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
         s3_client.put_object(
             Bucket=bucket, Key="last_extract.txt", Body=store_last_extract
         )
+        log_message(__name__, 20, f"Extract function completed at {store_last_extract}")
 
 
     except ClientError as e:
-        name = __name__
-        log_message(name, "40", e.response["Error"]["Message"])
+        log_message(__name__, 40, e.response["Error"]["Message"])
+
     finally:
-        conn.close()
+        if conn:
+            conn.close()
+            log_message(__name__, 20, "DB connection closed")

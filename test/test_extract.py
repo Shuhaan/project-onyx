@@ -7,17 +7,6 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 from src.extract import extract_from_db_write_to_s3
-from pprint import pprint
-from utils_for_testing import (
-    create_s3_bucket,
-    upload_to_s3,
-    view_bucket_contents,
-    credentials_storer,
-    secret_retriever,
-)
-
-
-load_dotenv()
 
 
 @pytest.fixture()
@@ -45,6 +34,7 @@ def secretsmanager_client():
 
 @pytest.fixture(scope="function")
 def create_secrets(secretsmanager_client):
+    load_dotenv()
     secret_string = {
         "username": os.getenv("Username"),
         "password": os.getenv("Password"),
@@ -104,23 +94,24 @@ class TestExtract:
 
         extract_from_db_write_to_s3("bucket", s3_client)
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
-        result = [bucket["Key"] for bucket in result_list_bucket]
+        result = [file_data["Key"] for file_data in result_list_bucket]
         expected = [
-            "address",
             "counterparty",
             "currency",
             "department",
             "design",
-            "last_extract.txt",
-            "payment",
-            "payment_type",
-            "purchase_order",
-            "sales_order",
             "staff",
+            "sales_order",
+            "address",
+            "payment",
+            "purchase_order",
+            "payment_type",
             "transaction",
+            "last_extract",
         ]
-        for folder, table in zip(result, expected):
-            assert table in folder
+
+        for table in expected:
+            assert any([folder.startswith(table) for folder in result])
 
     def test_extract_writes_jsons_into_s3_with_correct_structure_from_db(
         self, s3_client, s3_ingested_data_bucket, create_secrets
@@ -130,7 +121,7 @@ class TestExtract:
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
         for key in result:
-            if ".txt" not in key:
+            if not key.endswith(".txt"):  # Filter out .txt files
                 json_file = s3_client.get_object(Bucket="bucket", Key=key)
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)

@@ -8,7 +8,7 @@ import logging
 
 def get_secret(secret_name="project-onyx/totesys-db-login", region_name="eu-west-2"):
     # Create a Secrets Manager client
-
+    log_message(__name__, 10, "Entered get_secret")
     try:
         client = boto3.client(service_name="secretsmanager", region_name=region_name)
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)
@@ -19,10 +19,12 @@ def get_secret(secret_name="project-onyx/totesys-db-login", region_name="eu-west
     except ClientError as e:
         # For a list of exceptions thrown, see
         # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        log_message(__name__, "40", e.response["Error"]["Message"])
         raise e
 
 
 def format_response(columns, response):
+    log_message(__name__, 10, "Entered format_response")
     formatted_response = []
     for row in response:
         extracted_from_response = {}
@@ -37,29 +39,28 @@ def format_response(columns, response):
 
 
 def log_message(name, level, message=""):
-    # sends a message to the logger
-    # use __name__ to pass function name to this function
-    # example useage: log_message("function_name", "30", "This is a warning")
-    # function author: Arif Syed
+    """
+    Sends a message to the logger.
 
+    :param name: The name of the logger.
+    :param level: The logging level (one of 0, 10, 20, 30, 40, 50).
+    :param message: The message to log.
+    """
     logger = logging.getLogger(name)
-    logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%d/%m/%Y %I:%M:%S %p",
-    )
-    logger.setLevel(logging.DEBUG)
 
-    if level == "10":
-        logger.debug(message)
+    # Define a mapping of level integers to logging methods
+    level_map = {
+        10: logger.debug,
+        20: logger.info,
+        30: logger.warning,
+        40: logger.error,
+        50: logger.critical,
+    }
 
-    if level == "20":
-        logger.info(message)
+    # Get the logging method from the map
+    log_method = level_map.get(level)
 
-    if level == "30":
-        logger.warning(message)
-
-    if level == "40":
-        logger.error(message)
-
-    if level == "50":
-        logger.critical(message)
+    if log_method:
+        log_method(message)
+    else:
+        logger.error("Invalid log level: %d", level)
