@@ -4,6 +4,7 @@ from moto import mock_aws
 import boto3
 import os
 from dotenv import load_dotenv
+import pandas as pd
 from src.extract import extract_from_db_write_to_s3
 from pprint import pprint
 
@@ -40,17 +41,13 @@ def transform(source_bucket, output_bucket):
             file = files[0]
             json_file = s3_client.get_object(Bucket=source_bucket, Key=file)
             json_contents = json_file["Body"].read().decode("utf-8")
-            content = json.loads(json_contents)
+            data = json.loads(json_contents)["address"]
 
-            for content_dict in content["address"]:
-
-                output_dict = {
-                    "location_id": content_dict["address_id"],
-                    **content_dict,
-                }
-                del output_dict["created_at"]
-                del output_dict["last_updated"]
-                transformed_json = json.dumps({"dim_location": output_dict}, indent=4)
-                s3_client.put_object(
-                    Bucket=output_bucket, Key="dim_location.json", Body=transformed_json
-                )
+            df = pd.DataFrame(data)
+            df = df.rename(columns={"address_id": "location_id"}).drop(
+                ["created_at", "last_updated"], axis=1
+            )
+            df.to_parquet("dim_location.parquet")
+            s3_client.upload_file(
+                "dim_location.parquet", output_bucket, "dim_location.parquet"
+            )

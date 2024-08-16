@@ -72,14 +72,13 @@ class TestTransform:
         print(result)
 
         expected = [
-            "dim_staff",
-            "dim_location",
-            "dim_design",
-            "dim_date",
-            "dim_currency",
-            "dim_counterparty",
-            "fact_sales_order",
-            "last_transform.txt",
+            "dim_staff.parquet",
+            "dim_location.parquet",
+            "dim_design.parquet",
+            "dim_date.parquet",
+            "dim_currency.parquet",
+            "dim_counterparty.parquet",
+            "fact_sales_order.parquet",
         ]
 
         for table in expected:
