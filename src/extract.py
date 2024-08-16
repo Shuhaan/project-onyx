@@ -5,6 +5,7 @@ from datetime import datetime
 import logging
 from connection import connect_to_db
 from utils import format_response, log_message
+
 # from pg8000.native import Connection
 
 
@@ -89,7 +90,6 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
         )
         log_message(__name__, 20, f"Extract function completed at {store_last_extract}")
 
-        # return extracted_json
     except ClientError as e:
         log_message(__name__, 40, e.response["Error"]["Message"])
 

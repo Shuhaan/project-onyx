@@ -4,53 +4,50 @@ from moto import mock_aws
 import boto3
 import os
 from dotenv import load_dotenv
+import pandas as pd
 from src.extract import extract_from_db_write_to_s3
 from pprint import pprint
+from utils import create_df_from_json
 
 
-def transform(source_bucket, output_bucket):
+def transform(source_bucket, file_name, output_bucket):
     s3_client = boto3.client("s3")
-    ingested_data_files = s3_client.list_objects(Bucket=source_bucket)["Contents"]
-    ingested_data_files_names = [file_data["Key"] for file_data in ingested_data_files]
+    table = file_name.split("/")[0]
+    df = create_df_from_json(source_bucket, file_name)
 
-    expected = [
-        "counterparty",
-        "currency",
-        "department",
-        "design",
-        "staff",
-        "sales_order",
-        "address",
-        "payment",
-        "purchase_order",
-        "payment_type",
-        "transaction",
-    ]
+    # Table-specific processing
+    if table == "address":
+        df = df.rename(columns={"address_id": "location_id"}).drop(
+            ["created_at", "last_updated"], axis=1
+        )
+        output_file = "dim_location.parquet"
 
-    file_dict = {name: [] for name in expected}
+    elif table == "design":
+        df = df.drop(["created_at", "last_updated"], axis=1)
+        output_file = "dim_design.parquet"
 
-    for filename in ingested_data_files_names:
-        for key in file_dict.keys():
-            if filename.startswith(key):
-                file_dict[key].append(filename)
-                break
+    elif table == "currency":
+        df = df.drop(["created_at", "last_updated"], axis=1).assign(
+            currency_name=[
+                "British Pound Sterling",
+                "United States Dollar",
+                "Euros",
+            ]
+        )
 
-    for table, files in file_dict.items():
-        if table == "address":
-            file = files[0]
-            json_file = s3_client.get_object(Bucket=source_bucket, Key=file)
-            json_contents = json_file["Body"].read().decode("utf-8")
-            content = json.loads(json_contents)
+    elif table == "counterparty":
+        df = df.drop(
+            ["commercial_contact", "delivery_contact", "created_at", "last_updated"],
+            axis=1,
+        )
+        output_file = "dim_counterparty.parquet"
 
-            for content_dict in content["address"]:
+    else:
+        output_file = ""
+        print(f"Unknown table encountered: {table}, skipping...")
 
-                output_dict = {
-                    "location_id": content_dict["address_id"],
-                    **content_dict,
-                }
-                del output_dict["created_at"]
-                del output_dict["last_updated"]
-                transformed_json = json.dumps({"dim_location": output_dict}, indent=4)
-                s3_client.put_object(
-                    Bucket=output_bucket, Key="dim_location.json", Body=transformed_json
-                )
+    # Save and upload the processed file_name
+    if output_file:
+        df.to_parquet(output_file)
+        s3_client.upload_file(output_file, output_bucket, output_file)
+        print(f"Uploaded {output_file} to {output_bucket}")
