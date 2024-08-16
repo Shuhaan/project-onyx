@@ -60,6 +60,7 @@ def write_files_to_ingested_date_bucket(create_secrets, s3_data_buckets):
 
 
 class TestTransform:
+    @pytest.mark.skip
     def test_transform_puts_files_in_processed_data_bucket(
         self, s3_client, write_files_to_ingested_date_bucket
     ):

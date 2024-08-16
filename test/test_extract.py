@@ -161,14 +161,14 @@ class TestExtract:
         self, patched_conn, s3_ingested_data_bucket, aws_credentials
     ):
         extract_from_db_write_to_s3("bucket", s3_ingested_data_bucket)
-       
+
         result_list_bucket = s3_ingested_data_bucket.list_objects(Bucket="bucket")[
             "Contents"
         ]
         # print(result_list_bucket)
 
         extract_from_db_write_to_s3("bucket", s3_ingested_data_bucket)
-      
+
         result_list_bucket = s3_ingested_data_bucket.list_objects(Bucket="bucket")[
             "Contents"
         ]
