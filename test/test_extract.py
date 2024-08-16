@@ -1,7 +1,7 @@
 import pytest
 import json
 from moto import mock_aws
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch#, MagicMock
 import boto3
 import os
 from datetime import datetime
@@ -87,6 +87,9 @@ class MockedConnection:
         return self.rows_data1
 
 
+    def close(self):
+        pass
+
 class TestExtract:
     def test_extract_writes_all_tables_to_s3_as_directories(
         self, s3_client, s3_ingested_data_bucket, create_secrets
@@ -146,7 +149,7 @@ class TestExtract:
                     assert isinstance(date, datetime)
 
 
-    @patch('pg8000.native.Connection', MagicMock(return_value=MockedConnection()))
+    @patch('pg8000.native.Connection', return_value=MockedConnection())
     def test_extract_only_uploads_new_entries_to_s3(
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
@@ -159,4 +162,5 @@ class TestExtract:
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
                 for folder in content:
-                    assert content[folder][0]["last_updated"]
+                    print(content[folder][0])
+                    assert content[folder][0]["meaningful_data"]
