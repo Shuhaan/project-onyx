@@ -3,21 +3,6 @@ from moto import mock_aws
 from extract_lambda.utils import get_secret, format_response, log_message
 
 
-@pytest.fixture(scope="class")
-def aws_creds():
-    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
-    os.environ["AWS_SECURITY_TOKEN"] = "testing"
-    os.environ["AWS_SESSION_TOKEN"] = "testing"
-    os.environ["AWS_DEFAULT_REGION"] = "eu-west-2"
-
-
-@pytest.fixture()
-def secretsmanager_client():
-    with mock_aws():
-        yield boto3.client("secretsmanager")
-
-
 class TestGetSecret:
     def test_get_secret(self, secretsmanager_client):
         secretsmanager_client.create_secret(
