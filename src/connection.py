@@ -9,11 +9,11 @@ def connect_to_db():
         credentials = get_secret()
         log_message(__name__, 20, "Retrieved secrets from Secret Manager for DB access")
         return native.Connection(
-            user=credentials["username"],
-            password=credentials["password"],
-            database=credentials["dbname"],
-            host=credentials["host"],
-            port=int(credentials["port"]),
+            user=credentials["USERNAME"],
+            password=credentials["PASSWORD"],
+            database=credentials["DBNAME"],
+            host=credentials["HOST"],
+            port=int(credentials["PORT"]),
         )
 
     except DatabaseError as e:
