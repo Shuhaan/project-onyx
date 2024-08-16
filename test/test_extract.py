@@ -76,14 +76,14 @@ class MockedConnection:
             {"name":"meaningful_data"},
             {"name":"last_updated"},
         ]
-        self.data1 = [["1",
+        self.rows_data1 = [["1",
                       "old_data1",
                       "1970-01-01 20:00:00"],
                       ["2",
                       "old_data2",
                       "1970-01-01 20:00:00"]]
         
-        self.data2 = [["1",
+        self.rows_data2 = [["1",
                       "new_data1",
                       "1980-01-01 20:00:00"],
                       ["2",
@@ -92,7 +92,9 @@ class MockedConnection:
 
     
     def run(self, query):
-        
+        if 'WHERE' in query:
+            return self.rows_data2
+        return self.rows_data1
 
 
 class TestExtract:
