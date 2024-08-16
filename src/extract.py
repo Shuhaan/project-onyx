@@ -5,6 +5,7 @@ from datetime import datetime
 import logging
 from connection import connect_to_db
 from utils import format_response, log_message
+
 # from pg8000.native import Connection
 
 
@@ -12,7 +13,8 @@ from utils import format_response, log_message
 logging.basicConfig(
     level=logging.INFO,  # Set the minimum logging level
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    force=True, datefmt="%d/%m/%Y %I:%M:%S %p",
+    force=True,
+    datefmt="%d/%m/%Y %I:%M:%S %p",
 )
 
 # Create a logger instance
@@ -81,7 +83,6 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             Bucket=bucket, Key="last_extract.txt", Body=store_last_extract
         )
         log_message(__name__, 20, f"Extract function completed at {store_last_extract}")
-
 
     except ClientError as e:
         log_message(__name__, 40, e.response["Error"]["Message"])

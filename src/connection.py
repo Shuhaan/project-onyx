@@ -17,5 +17,5 @@ def connect_to_db():
         )
 
     except DatabaseError as e:
-        log_message(__name__, 40, e.response['Error']['Message'])
+        log_message(__name__, 40, e.response["Error"]["Message"])
         raise e
