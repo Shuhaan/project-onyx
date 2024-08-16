@@ -26,13 +26,13 @@ jobs:
         run: make dev-setup
 
       - name: Run tests
+        env:
+          HOST: ${{ secrets.HOST }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          DATABASE: ${{ secrets.DATABASE }}
+          PORT: ${{ secrets.PORT }}
         run: make run-checks
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          database: ${{ secrets.DATABASE }}
-          port: ${{ secrets.PORT }}
 
   deploy-lambda:
     name: deploy-lambda
