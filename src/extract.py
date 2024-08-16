@@ -79,12 +79,6 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
                 s3_key = f"{table}/{date_str}.json"
                 s3_client.put_object(Bucket=bucket, Key=s3_key, Body=extracted_json)
                 log_message(__name__, 20, f"{s3_key} was written to {bucket}")
-        print(
-            s3_client.get_object(Bucket=bucket, Key=s3_key)["Body"]
-            .read()
-            .decode("utf-8"),
-            "<<< s3 contents",
-        )
 
         store_last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
         s3_client.put_object(
