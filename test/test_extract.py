@@ -1,7 +1,7 @@
 import pytest
 import json
 from moto import mock_aws
-from unittest.mock import patch#, MagicMock
+from unittest.mock import patch  # , MagicMock
 import boto3
 import os
 from datetime import datetime
@@ -56,38 +56,34 @@ def create_secrets(secretsmanager_client):
 
 
 class MockedConnection:
-    def __init__(self, 
-                user=os.getenv("Username"), 
-                password=os.getenv("Password"),
-                database=os.getenv("Database"),
-                host=os.getenv("Hostname"),
-                port=os.getenv("Port")
-                ):
+    def __init__(
+        self,
+        user=os.getenv("Username"),
+        password=os.getenv("Password"),
+        database=os.getenv("Database"),
+        host=os.getenv("Hostname"),
+        port=os.getenv("Port"),
+    ):
         self.user = user
         self.password = password
         self.database = database
         self.host = host
         self.port = port
         self.columns = [
-            {"name":"data_id"},
-            {"name":"meaningful_data"},
-            {"name":"last_updated"},
+            {"name": "data_id"},
+            {"name": "meaningful_data"},
+            {"name": "last_updated"},
         ]
-        self.rows_data1 = [["1",
-                      "old_data1",
-                      "1970-01-01 20:00:00"],
-                      ["2",
-                      "old_data2",
-                      "1970-01-01 20:00:00"]]
-        
-        self.rows_data2 = [["1",
-                      "new_data1",
-                      "1980-01-01 20:00:00"],
-                      ["2",
-                      "old_data2",
-                      "1970-01-01 20:00:00"]]
+        self.rows_data1 = [
+            ["1", "old_data1", "1970-01-01 20:00:00"],
+            ["2", "old_data2", "1970-01-01 20:00:00"],
+        ]
 
-    
+        self.rows_data2 = [
+            ["1", "new_data1", "1980-01-01 20:00:00"],
+            ["2", "old_data2", "1970-01-01 20:00:00"],
+        ]
+
     def run(self, query):
         if 'WHERE' in query:
             # print('Mock WHERE query ran')
@@ -95,9 +91,9 @@ class MockedConnection:
         # print('Mock query ran')
         return self.rows_data1
 
-
     def close(self):
         pass
+
 
 class TestExtract:
     def test_extract_writes_all_tables_to_s3_as_directories(
@@ -139,7 +135,7 @@ class TestExtract:
                 content = json.loads(json_contents)
                 for folder in content:
                     assert content[folder][0]["created_at"]
-                    
+
     def test_extract_writes_jsons_into_s3_with_correct_data_type_from_db(
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
@@ -157,6 +153,7 @@ class TestExtract:
                     date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                     assert isinstance(date, datetime)
 
+                    
     @patch('src.extract.connect_to_db', return_value=MockedConnection())
     def test_mocked_connection_patch_working(
         self, patched_conn, s3_ingested_data_bucket, aws_credentials
@@ -186,27 +183,6 @@ class TestExtract:
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
                 for folder in content:
+                    print(content[folder][0])
                     assert content[folder][0]["meaningful_data"]
-
-                    
-                    
-    # @patch('pg8000.native.Connection', return_value=MockedConnection())
-    # def test_extract_does_not_upload_blank_json_to_s3(
-    #     self, s3_client, s3_ingested_data_bucket, create_secrets
-    # ):
-    #     extract_from_db_write_to_s3("bucket", s3_client)
-    #     result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
-    #     print(result_list_bucket)
-    #     result = [bucket["Key"] for bucket in result_list_bucket]
-    #     print(result)
-    #     for key in result:
-    #         print(key)
-    #         assert False
-    #         if ".txt" not in key:
-    #             json_file = s3_client.get_object(Bucket="bucket", Key=key)
-    #             json_contents = json_file["Body"].read().decode("utf-8")
-    #             content = json.loads(json_contents)
-    #             for folder in content:
-    #                 print(content[folder][0])
-    #                 assert 1 == 2
-
+               
