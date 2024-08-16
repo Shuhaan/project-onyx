@@ -11,7 +11,7 @@ from utils import format_response, log_message
 logging.basicConfig(
     level=logging.INFO,  # Set the minimum logging level
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    force=True,
+    force=True, datefmt="%d/%m/%Y %I:%M:%S %p",
 )
 
 # Create a logger instance
