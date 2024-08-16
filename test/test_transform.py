@@ -63,8 +63,16 @@ class TestTransform:
     def test_transform_puts_files_in_processed_data_bucket(
         self, s3_client, write_files_to_ingested_date_bucket
     ):
+        ingested_data_files = s3_client.list_objects(
+            Bucket="onyx-totesys-ingested-data-bucket"
+        )["Contents"]
+        ingested_files = [bucket["Key"] for bucket in ingested_data_files]
 
-        transform("onyx-totesys-ingested-data-bucket", "onyx-processed-data-bucket")
+        for file in ingested_files:
+            transform(
+                "onyx-totesys-ingested-data-bucket", file, "onyx-processed-data-bucket"
+            )
+
         result_list_processed_data_bucket = s3_client.list_objects(
             Bucket="onyx-processed-data-bucket"
         )["Contents"]
