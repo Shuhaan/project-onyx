@@ -8,6 +8,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from src.extract import extract_from_db_write_to_s3
 
+
 @pytest.fixture(scope="function")
 def aws_credentials():
     os.environ["AWS_ACCESS_KEY_ID"] = "testing"
@@ -15,6 +16,7 @@ def aws_credentials():
     os.environ["AWS_SECURITY_TOKEN"] = "testing"
     os.environ["AWS_SESSION_TOKEN"] = "testing"
     os.environ["AWS_DEFAULT_REGION"] = "eu-west-2"
+
 
 @pytest.fixture()
 def s3_client(aws_credentials):
@@ -32,6 +34,7 @@ def s3_ingested_data_bucket(s3_client):
         },
     )
     return s3_client
+
 
 @pytest.fixture()
 def secretsmanager_client(aws_credentials):
@@ -85,7 +88,7 @@ class MockedConnection:
         ]
 
     def run(self, query):
-        if 'WHERE' in query:
+        if "WHERE" in query:
             # print('Mock WHERE query ran')
             return self.rows_data2
         # print('Mock query ran')
@@ -153,26 +156,23 @@ class TestExtract:
                     date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                     assert isinstance(date, datetime)
 
-                    
-    @patch('src.extract.connect_to_db', return_value=MockedConnection())
+    @patch("src.extract.connect_to_db", return_value=MockedConnection())
     def test_mocked_connection_patch_working(
         self, patched_conn, s3_ingested_data_bucket, aws_credentials
     ):
         extract_from_db_write_to_s3("bucket", s3_ingested_data_bucket)
-        first_file = s3_ingested_data_bucket.get_object(Bucket='bucket', Key='last_key.txt')['Body'].read().decode('utf-8')
-        # print(first_file)
-        result_list_bucket = s3_ingested_data_bucket.list_objects(Bucket="bucket")['Contents']
+       
+        result_list_bucket = s3_ingested_data_bucket.list_objects(Bucket="bucket")[
+            "Contents"
+        ]
         # print(result_list_bucket)
-        
-        
-        
+
         extract_from_db_write_to_s3("bucket", s3_ingested_data_bucket)
-        second_file = s3_ingested_data_bucket.get_object(Bucket='bucket', Key='last_key.txt')['Body'].read().decode('utf-8')
-        # print(second_file)
-        result_list_bucket = s3_ingested_data_bucket.list_objects(Bucket="bucket")['Contents']
+      
+        result_list_bucket = s3_ingested_data_bucket.list_objects(Bucket="bucket")[
+            "Contents"
+        ]
         # print(result_list_bucket)
-        
-        
 
         result = [bucket["Key"] for bucket in result_list_bucket]
         # print(result)
@@ -185,4 +185,3 @@ class TestExtract:
                 for folder in content:
                     print(content[folder][0])
                     assert content[folder][0]["meaningful_data"]
-               
