@@ -168,4 +168,4 @@ class TestExtract:
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
                 for folder in content:
-                    assert content[folder][0]["created_at"]
+                    assert content[folder][0]["last_updated"]

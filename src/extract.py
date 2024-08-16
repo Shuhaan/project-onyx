@@ -45,8 +45,10 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
         for table in totesys_table_list:
             query = f"SELECT * FROM {table} "
             if last_extract:
-                query += f"WHERE last_updated > {last_extract}"
+                query += f"WHERE last_updated > '{last_extract}'"
             query += ";"
+
+            # add check to compare new data with old data and update if there are updates.
 
             response = conn.run(query)
             columns = [col["name"] for col in conn.columns]
@@ -60,7 +62,6 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             Bucket=bucket, Key="last_extract.txt", Body=store_last_extract
         )
 
-        # add check to compare new data with old data and update if there are updates.
 
     except ClientError as e:
         name = __name__
