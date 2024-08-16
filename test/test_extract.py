@@ -1,7 +1,7 @@
 import pytest
 import json
 from moto import mock_aws
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import boto3
 import os
 from datetime import datetime
@@ -146,7 +146,7 @@ class TestExtract:
                     assert isinstance(date, datetime)
 
 
-    @patch('pg8000.native.Connection', return_value=MockedConnection())      
+    @patch('pg8000.native.Connection', MagicMock(return_value=MockedConnection()))
     def test_extract_only_uploads_new_entries_to_s3(
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
