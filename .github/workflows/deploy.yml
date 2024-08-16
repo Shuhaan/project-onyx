@@ -27,6 +27,12 @@ jobs:
 
       - name: Run tests
         run: make run-checks
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          database: ${{ secrets.DATABASE }}
+          port: ${{ secrets.PORT }}
 
   deploy-lambda:
     name: deploy-lambda
