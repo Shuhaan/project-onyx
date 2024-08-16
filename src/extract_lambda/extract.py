@@ -3,10 +3,8 @@ import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
 import logging
-from connection import connect_to_db
-from utils import format_response, log_message
-
-# from pg8000.native import Connection
+from extract_lambda.utils import format_response, log_message
+from extract_lambda.connection import connect_to_db
 
 
 # Configure logging
@@ -23,14 +21,16 @@ logger = logging.getLogger(__name__)
 
 def lambda_handler(event, context):
     log_message(__name__, 10, "Entered lambda_handler")
-    extract_from_db_write_to_s3("onyx-totesys-ingested-data-bucket")
+    bucket_name = os.environ.get("S3_BUCKET_NAME")
+    extract(bucket_name)
 
 
-def extract_from_db_write_to_s3(bucket, s3_client=None):
+def extract(bucket, s3_client=None):
     log_message(__name__, 10, "Entered extract function")
     if not s3_client:
         s3_client = boto3.client("s3")
     conn = None
+
     try:
         conn = connect_to_db()
         log_message(__name__, 20, "Connection to DB made")
@@ -73,6 +73,7 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
             response = conn.run(query)
 
             if len(response):
+                print(conn)
                 columns = [col["name"] for col in conn.columns]
                 formatted_response = {table: format_response(columns, response)}
                 extracted_json = json.dumps(formatted_response, indent=4)

@@ -1,12 +1,9 @@
-import pytest
-import json
+import pytest, json, boto3, os
 from moto import mock_aws
-from unittest.mock import patch  # , MagicMock
-import boto3
-import os
+from unittest.mock import patch
 from datetime import datetime
 from dotenv import load_dotenv
-from src.extract import extract_from_db_write_to_s3
+from extract_lambda.extract import extract
 
 
 @pytest.fixture(scope="function")
@@ -89,9 +86,7 @@ class MockedConnection:
 
     def run(self, query):
         if "WHERE" in query:
-            # print('Mock WHERE query ran')
             return self.rows_data2
-        # print('Mock query ran')
         return self.rows_data1
 
     def close(self):
@@ -103,7 +98,7 @@ class TestExtract:
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
 
-        extract_from_db_write_to_s3("bucket", s3_client)
+        extract("bucket", s3_client)
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [file_data["Key"] for file_data in result_list_bucket]
         expected = [
@@ -128,7 +123,7 @@ class TestExtract:
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
 
-        extract_from_db_write_to_s3("bucket", s3_client)
+        extract("bucket", s3_client)
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
         for key in result:
@@ -143,7 +138,7 @@ class TestExtract:
         self, s3_client, s3_ingested_data_bucket, create_secrets
     ):
 
-        extract_from_db_write_to_s3("bucket", s3_client)
+        extract("bucket", s3_client)
         result_list_bucket = s3_client.list_objects(Bucket="bucket")["Contents"]
         result = [bucket["Key"] for bucket in result_list_bucket]
         for key in result:
@@ -156,28 +151,24 @@ class TestExtract:
                     date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                     assert isinstance(date, datetime)
 
-    @patch("src.extract.connect_to_db", return_value=MockedConnection())
+    @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_mocked_connection_patch_working(
         self, patched_conn, s3_ingested_data_bucket, aws_credentials
     ):
-        extract_from_db_write_to_s3("bucket", s3_ingested_data_bucket)
+        extract("bucket", s3_ingested_data_bucket)
 
         result_list_bucket = s3_ingested_data_bucket.list_objects(Bucket="bucket")[
             "Contents"
         ]
-        # print(result_list_bucket)
 
-        extract_from_db_write_to_s3("bucket", s3_ingested_data_bucket)
+        extract("bucket", s3_ingested_data_bucket)
 
         result_list_bucket = s3_ingested_data_bucket.list_objects(Bucket="bucket")[
             "Contents"
         ]
-        # print(result_list_bucket)
 
         result = [bucket["Key"] for bucket in result_list_bucket]
-        # print(result)
         for key in result:
-            # print(key)
             if ".txt" not in key:
                 json_file = s3_ingested_data_bucket.get_object(Bucket="bucket", Key=key)
                 json_contents = json_file["Body"].read().decode("utf-8")
