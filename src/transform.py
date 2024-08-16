@@ -35,13 +35,22 @@ def transform(source_bucket, output_bucket):
                 file_dict[key].append(filename)
                 break
 
-    print(file_dict)
+    for table, files in file_dict.items():
+        if table == "address":
+            file = files[0]
+            json_file = s3_client.get_object(Bucket=source_bucket, Key=file)
+            json_contents = json_file["Body"].read().decode("utf-8")
+            content = json.loads(json_contents)
 
-    # for key in ingested_data_files_names:
-    #     if not key.endswith(".txt"):  # Filter out .txt files
-    #         # Get the file from the source bucket
-    #         json_file = s3_client.get_object(Bucket=source_bucket, Key=key)
-    #         json_contents = json_file["Body"].read().decode("utf-8")
-    #         content = json.loads(json_contents)
+            for content_dict in content["address"]:
 
-    #         pprint(content)
+                output_dict = {
+                    "location_id": content_dict["address_id"],
+                    **content_dict,
+                }
+                del output_dict["created_at"]
+                del output_dict["last_updated"]
+                transformed_json = json.dumps({"dim_location": output_dict}, indent=4)
+                s3_client.put_object(
+                    Bucket=output_bucket, Key="dim_location.json", Body=transformed_json
+                )
