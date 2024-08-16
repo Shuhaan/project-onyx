@@ -1,4 +1,4 @@
-#Create Email Notification Upon Extraction Error
+#Create Email Notification Upon Extraction Error or Critical log
 
 resource "aws_cloudwatch_log_metric_filter" "extract_error_detection" {
   name                  = "ExtractErrorDetection"
@@ -11,7 +11,6 @@ resource "aws_cloudwatch_log_metric_filter" "extract_error_detection" {
     value               = "1"
   }
 }
-
 
 resource "aws_cloudwatch_log_metric_filter" "extract_critical_detection" {
   name                  = "ExtractCriticalDetection"
@@ -56,7 +55,6 @@ resource "aws_cloudwatch_metric_alarm" "extract_critical_alarm" {
   alarm_description     = "Triggered when an CRITICAL is logged."
   alarm_actions         = [aws_sns_topic.alert_topic2.arn]
 }
-
 
 # Create an SNS Topic for email notifications
 resource "aws_sns_topic" "alert_topic" {
