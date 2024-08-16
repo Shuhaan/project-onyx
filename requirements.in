@@ -8,3 +8,5 @@ moto
 mock
 pytest-cov
 pandas
+fastparquet
+parquet-tools
