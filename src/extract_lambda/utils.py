@@ -86,8 +86,8 @@ def log_message(name: str, level: int, message: str = ""):
 
 def get_file_contents(key, s3_client):
     json_file = s3_client.get_object(
-            Bucket="onyx-totesys-ingested-data-bucket", Key=key
-        )
+        Bucket="onyx-totesys-ingested-data-bucket", Key=key
+    )
     json_contents = json_file["Body"].read().decode("utf-8")
     content = json.loads(json_contents)
     return content
