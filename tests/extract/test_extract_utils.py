@@ -1,23 +1,6 @@
-import pytest, logging
-import os
-import boto3
+import pytest, logging, os, boto3
 from moto import mock_aws
-from src.utils import get_secret, format_response, log_message
-
-
-@pytest.fixture(scope="class")
-def aws_creds():
-    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
-    os.environ["AWS_SECURITY_TOKEN"] = "testing"
-    os.environ["AWS_SESSION_TOKEN"] = "testing"
-    os.environ["AWS_DEFAULT_REGION"] = "eu-west-2"
-
-
-@pytest.fixture()
-def secretsmanager_client():
-    with mock_aws():
-        yield boto3.client("secretsmanager")
+from extract_lambda.utils import get_secret, format_response, log_message
 
 
 class TestGetSecret:
@@ -36,9 +19,10 @@ class TestGetSecret:
 
 
 class TestFormatResponse:
-    @pytest.mark.skip
     def test_format_response(self):
-        assert False
+        result = format_response(["A", "B"], [[1, 2], [10, 11]])
+
+        assert result == [{"A": 1, "B": 2}, {"A": 10, "B": 11}]
 
 
 class TestLogMessage:

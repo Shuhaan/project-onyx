@@ -1,12 +1,9 @@
-import json
-import boto3
-from botocore.exceptions import ClientError
+import json, os, boto3, logging
 from datetime import datetime
-import logging
-from connection import connect_to_db
-from utils import format_response, log_message
-
-# from pg8000.native import Connection
+from botocore.exceptions import ClientError
+from typing import Any
+from extract_lambda.utils import format_response, log_message
+from extract_lambda.connection import connect_to_db
 
 
 # Configure logging
@@ -21,16 +18,39 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def lambda_handler(event, context):
+def lambda_handler(event: dict, context: Any):
+    """
+    AWS Lambda function entry point.
+
+    This function is triggered by an event and context, extracts data from a database,
+    and stores the data in an S3 bucket. The bucket name is retrieved from environment variables.
+
+    :param event: The event data passed to the Lambda function (as a dictionary).
+    :param context: The runtime information of the Lambda function (e.g., function name, version).
+    """
     log_message(__name__, 10, "Entered lambda_handler")
-    extract_from_db_write_to_s3("onyx-totesys-ingested-data-bucket")
+    bucket_name = os.environ.get("S3_BUCKET_NAME")
+    extract(bucket_name)
 
 
-def extract_from_db_write_to_s3(bucket, s3_client=None):
+def extract(bucket: str, s3_client=None):
+    """
+    Extracts data from a database and stores it in an S3 bucket.
+
+    Connects to a database, retrieves data from specified tables, formats the data,
+    and uploads it to an S3 bucket. If a last extract timestamp is found, only new
+    or updated records are retrieved. Updates the timestamp of the last extraction in S3.
+
+    :param bucket: The name of the S3 bucket where data will be stored.
+    :param s3_client: Optional S3 client to use for interactions with S3. If not provided, a new client is created.
+
+    :raises ClientError: If there is an issue with S3 operations or if the specified bucket or object does not exist.
+    """
     log_message(__name__, 10, "Entered extract function")
     if not s3_client:
         s3_client = boto3.client("s3")
     conn = None
+
     try:
         conn = connect_to_db()
         log_message(__name__, 20, "Connection to DB made")
@@ -67,9 +87,9 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
                 query += f"WHERE last_updated > '{last_extract}'"
             query += ";"
 
-            # add check to compare new data with old data and update if there are updates.
+            # Add check to compare new data with old data and update if there are updates.
 
-            # if response doesn't have modified data, don't upload file.
+            # If response doesn't have modified data, don't upload file.
             response = conn.run(query)
 
             if len(response):
@@ -86,7 +106,7 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
         )
 
     except ClientError as e:
-        log_message(__name__, 40, e.response["Error"]["Message"])
+        log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
 
     finally:
         if conn:
