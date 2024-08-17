@@ -1,6 +1,6 @@
 import boto3
 import json
-import pandas as pd
+#import pandas as pd
 from botocore.exceptions import ClientError
 from datetime import datetime
 from decimal import Decimal
@@ -88,26 +88,26 @@ def log_message(name, level, message=""):
         logger.error("Invalid log level: %d", level)
 
 
-def create_df_from_json(source_bucket, file_name):
-    """_summary_
+# def create_df_from_json(source_bucket, file_name):
+#     """_summary_
 
-    Args:
-        source_bucket (_type_): _description_
-        file_name (_type_): _description_
+#     Args:
+#         source_bucket (_type_): _description_
+#         file_name (_type_): _description_
 
-    Returns:
-        _type_: _description_
-    """
-    if file_name.endswith(".json"):
-        s3_client = boto3.client("s3")
+#     Returns:
+#         _type_: _description_
+#     """
+    # if file_name.endswith(".json"):
+    #     s3_client = boto3.client("s3")
 
-        table = file_name.split("/")[0]
-        json_file = s3_client.get_object(Bucket=source_bucket, Key=file_name)
-        json_contents = json_file["Body"].read().decode("utf-8")
-        data = json.loads(json_contents).get(table, [])
+    #     table = file_name.split("/")[0]
+    #     json_file = s3_client.get_object(Bucket=source_bucket, Key=file_name)
+    #     json_contents = json_file["Body"].read().decode("utf-8")
+    #     data = json.loads(json_contents).get(table, [])
 
-        if not data:  # Skip if the JSON content does not contain expected table data
-            print(f"No data found for table: {table}")
-        else:
-            df = pd.DataFrame(data)
-            return df
+    #     if not data:  # Skip if the JSON content does not contain expected table data
+    #         print(f"No data found for table: {table}")
+    #     else:
+    #         df = pd.DataFrame(data)
+    #         return df

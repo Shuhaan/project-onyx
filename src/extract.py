@@ -76,19 +76,14 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
                 columns = [col["name"] for col in conn.columns]
                 formatted_response = {table: format_response(columns, response)}
                 extracted_json = json.dumps(formatted_response, indent=4)
-                s3_key = f"{table}/{date_str}.json" 
+                s3_key = f"{table}/{date_str}.json"
                 s3_client.put_object(Bucket=bucket, Key=s3_key, Body=extracted_json)
                 log_message(__name__, 20, f"{s3_key} was written to {bucket}")
-        print(s3_client.get_object(Bucket=bucket, Key=s3_key)['Body'].read().decode('utf-8'),'<<< s3 contents')
-        
+
         store_last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
         s3_client.put_object(
             Bucket=bucket, Key="last_extract.txt", Body=store_last_extract
         )
-        s3_client.put_object(
-            Bucket=bucket, Key="last_key.txt", Body=store_last_key
-        )
-        log_message(__name__, 20, f"Extract function completed at {store_last_extract}")
 
     except ClientError as e:
         log_message(__name__, 40, e.response["Error"]["Message"])
