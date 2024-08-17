@@ -84,22 +84,36 @@ def extract(bucket: str, s3_client=None):
         for table in totesys_table_list:
             query = f"SELECT * FROM {table} "
             if last_extract:
+                # Add check to compare new data with old data and update if there are updates.
                 query += f"WHERE last_updated > '{last_extract}'"
             query += ";"
 
-            # Add check to compare new data with old data and update if there are updates.
-
-            # If response doesn't have modified data, don't upload file.
             response = conn.run(query)
-
+            # print(response)
+            # If response doesn't have modified data, don't upload file.
             if len(response):
                 columns = [col["name"] for col in conn.columns]
                 formatted_response = {table: format_response(columns, response)}
                 extracted_json = json.dumps(formatted_response, indent=4)
                 s3_key = f"{table}/{date_str}.json"
                 s3_client.put_object(Bucket=bucket, Key=s3_key, Body=extracted_json)
+                
                 log_message(__name__, 20, f"{s3_key} was written to {bucket}")
 
+                # # compile all tables to add to updated-data.json
+                # if not last_extract:
+                #     compiled_data = formatted_response
+                    
+                # # if new data found, update the updated-data.json
+                # if "WHERE" in query:
+
+                #     pass
+
+        # # keep a json file to add updated data to.
+        # if not last_extract:
+        #     updated_data_key = "updated-data.json"
+        #     s3_client.put_object(Bucket=bucket, Key=updated_data_key, Body=extracted_json)
+                        
         store_last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
         s3_client.put_object(
             Bucket=bucket, Key="last_extract.txt", Body=store_last_extract
@@ -110,5 +124,7 @@ def extract(bucket: str, s3_client=None):
 
     finally:
         if conn:
+            # print to check if patched or real connection used
+            print(s3_client, "s3_client that was used")
             conn.close()
             log_message(__name__, 20, "DB connection closed")
