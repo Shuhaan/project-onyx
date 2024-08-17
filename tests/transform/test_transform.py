@@ -3,21 +3,19 @@ from transform_lambda.transform import transform
 
 
 class TestTransform:
-    @pytest.mark.skip
+    # @pytest.mark.skip
     def test_transform_puts_files_in_processed_data_bucket(
-        self, s3_client, write_files_to_ingested_date_bucket
+        self, s3_client, write_files_to_ingested_data_bucket
     ):
-        ingested_data_files = s3_client.list_objects(
-            Bucket="onyx-totesys-ingested-data-bucket"
-        )["Contents"]
+        ingested_data_files = s3_client.list_objects(Bucket="test-ingested-bucket")[
+            "Contents"
+        ]
         new_files = [bucket["Key"] for bucket in ingested_data_files]
 
-        transform(
-            "onyx-totesys-ingested-data-bucket", new_files, "onyx-processed-data-bucket"
-        )
+        transform("test-ingested-bucket", new_files, "test-processed-bucket")
 
         result_list_processed_data_bucket = s3_client.list_objects(
-            Bucket="onyx-processed-data-bucket"
+            Bucket="test-processed-bucket"
         )["Contents"]
         result = [bucket["Key"] for bucket in result_list_processed_data_bucket]
         print(result)
