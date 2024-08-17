@@ -42,7 +42,7 @@ def create_df_from_json(source_bucket: str, file_name: str) -> Optional[pd.DataF
 
     Returns:
         Optional[pd.DataFrame]: A DataFrame containing the data from the JSON file,
-        or None if no data is found for the specified table.
+        or None if there are issues with the file or its content.
     """
     if not file_name.endswith(".json"):
         print(f"File {file_name} is not a JSON file.")
@@ -59,13 +59,8 @@ def create_df_from_json(source_bucket: str, file_name: str) -> Optional[pd.DataF
         # Determine the table name from the file path
         table = file_name.split("/")[0]
         data = json_data.get(table, [])
-
-        # Check if data is found and convert to DataFrame
-        if not data:
-            print(f"No data found for table: {table}")
-            return None
-
         df = pd.DataFrame(data)
+
         return df
 
     except Exception as e:

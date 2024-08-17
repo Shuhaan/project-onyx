@@ -38,21 +38,34 @@ def format_response(
     """
     Formats a response into a list of dictionaries with columns as keys.
 
+    Validates that each row in the response has the same number of elements as the columns.
+
     :param columns: A list of column names.
     :param response: A list of rows, where each row is a list of values.
     :return: A list of dictionaries where each dictionary represents a row.
+    :raises ValueError: If any row in the response has a different number of elements than the columns.
     """
     log_message(__name__, 10, "Entered format_response")
+
     formatted_response = []
+    num_columns = len(columns)
+
     for row in response:
+        if len(row) != num_columns:
+            raise ValueError("Mismatch between number of columns and row length")
+
         extracted_from_response = {}
-        for i in range(len(columns)):
-            if isinstance(row[i], datetime):
-                row[i] = row[i].strftime("%Y-%m-%d %H:%M:%S")
-            if type(row[i]) == type(Decimal("1.00")):
-                row[i] = float(row[i])
-            extracted_from_response[columns[i]] = row[i]
+
+        for column, value in zip(columns, row):
+            if isinstance(value, datetime):
+                value = value.strftime("%Y-%m-%d %H:%M:%S")
+            elif isinstance(value, Decimal):
+                value = float(value)
+
+            extracted_from_response[column] = value
+
         formatted_response.append(extracted_from_response)
+
     return formatted_response
 
 
