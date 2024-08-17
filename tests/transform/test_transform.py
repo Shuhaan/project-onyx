@@ -13,12 +13,11 @@ class TestTransform:
         ingested_data_files = s3_client.list_objects(
             Bucket="onyx-totesys-ingested-data-bucket"
         )["Contents"]
-        ingested_files = [bucket["Key"] for bucket in ingested_data_files]
+        new_files = [bucket["Key"] for bucket in ingested_data_files]
 
-        for file in ingested_files:
-            transform(
-                "onyx-totesys-ingested-data-bucket", file, "onyx-processed-data-bucket"
-            )
+        transform(
+            "onyx-totesys-ingested-data-bucket", new_files, "onyx-processed-data-bucket"
+        )
 
         result_list_processed_data_bucket = s3_client.list_objects(
             Bucket="onyx-processed-data-bucket"
