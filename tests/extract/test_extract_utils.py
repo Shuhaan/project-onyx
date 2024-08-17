@@ -19,9 +19,10 @@ class TestGetSecret:
 
 
 class TestFormatResponse:
-    @pytest.mark.skip
     def test_format_response(self):
-        assert False
+        result = format_response(["A", "B"], [[1, 2], [10, 11]])
+
+        assert result == [{"A": 1, "B": 2}, {"A": 10, "B": 11}]
 
 
 class TestLogMessage:

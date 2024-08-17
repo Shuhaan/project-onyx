@@ -16,7 +16,6 @@ class TestLogMessage:
 
 
 class TestCreateDFFromJSON:
-    # @pytest.mark.skip
     def test_create_df_from_json_returns_data_frame(
         self, s3_client, write_files_to_ingested_date_bucket
     ):
