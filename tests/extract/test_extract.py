@@ -25,7 +25,7 @@ class MockedConnection:
 
         self.rows_data2 = [
             ["1", "new_data1", "1980-01-01 20:00:00"],
-            ["2", "old_data2", "1970-01-01 20:00:00"],
+            ["2", "new_data2", "1970-01-01 20:00:00"],
         ]
 
     def run(self, query):
@@ -104,23 +104,16 @@ class TestExtract:
 
     @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_mocked_connection_patch_working(self, s3_data_buckets):
+        # Execute the extraction function
         extract("test-ingested-bucket", s3_data_buckets)
 
+        # List objects in the bucket
         result_list_bucket = s3_data_buckets.list_objects(
             Bucket="test-ingested-bucket"
         )["Contents"]
-
         result = [bucket["Key"] for bucket in result_list_bucket]
 
-        extract("test-ingested-bucket", s3_data_buckets)
-
-        result_list_bucket2 = s3_data_buckets.list_objects(
-            Bucket="test-ingested-bucket"
-        )["Contents"]
-
-        result2 = [bucket["Key"] for bucket in result_list_bucket2]
-
-        # print(result, "result")
+        # Process each file and validate its content
         for key in result:
             if not key.endswith(".txt"):
                 json_file = s3_data_buckets.get_object(
@@ -128,5 +121,11 @@ class TestExtract:
                 )
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
+
+                # Validate that 'meaningful_data' is present and correct
                 for folder in content:
-                    assert content[folder][0]["meaningful_data"]
+                    assert "meaningful_data" in content[folder][0]
+                    assert content[folder][0]["meaningful_data"] in [
+                        "new_data1",
+                        "new_data2",
+                    ]

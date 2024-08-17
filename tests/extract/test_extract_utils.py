@@ -18,16 +18,19 @@ class TestGetSecret:
 
 
 class TestFormatResponse:
-    def test_format_response(self):
-        result = format_response(["A", "B"], [[1, 2], [10, 11]])
-
-        assert result == [{"A": 1, "B": 2}, {"A": 10, "B": 11}]
+    @pytest.mark.parametrize(
+        "columns, response, expected",
+        [(["A", "B"], [[1, 2], [10, 11]], [{"A": 1, "B": 2}, {"A": 10, "B": 11}])],
+    )
+    def test_format_response(self, columns, response, expected):
+        result = format_response(columns, response)
+        assert result == expected
 
 
 class TestLogMessage:
     def test_log_message(self, caplog):
         caplog.set_level(logging.INFO)
-        result = log_message("function_name", 30, "This is a warning")
+        log_message("function_name", 30, "This is a warning")
         expected = ["This is a warning"]
         assert caplog.messages == expected
         assert "WARNING" in caplog.text
