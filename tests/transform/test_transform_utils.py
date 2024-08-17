@@ -1,7 +1,5 @@
-import pytest, logging, os, boto3
+import pytest, logging
 import pandas as pd
-from moto import mock_aws
-from dotenv import load_dotenv
 from extract_lambda.extract import extract
 from transform_lambda.utils import log_message, create_df_from_json
 

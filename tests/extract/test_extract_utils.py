@@ -1,5 +1,4 @@
-import pytest, logging, os, boto3
-from moto import mock_aws
+import pytest, logging
 from extract_lambda.utils import get_secret, format_response, log_message
 
 

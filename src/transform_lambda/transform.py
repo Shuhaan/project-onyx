@@ -1,7 +1,5 @@
-import json, boto3, logging
-import pandas as pd
+import boto3, logging
 from botocore.exceptions import ClientError
-from datetime import datetime
 from typing import Any
 from transform_lambda.utils import log_message, create_df_from_json, create_dim_date
 

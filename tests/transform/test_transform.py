@@ -1,7 +1,4 @@
 import pytest
-from moto import mock_aws
-from dotenv import load_dotenv
-from extract_lambda.extract import extract
 from transform_lambda.transform import transform
 
 
