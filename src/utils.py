@@ -8,17 +8,17 @@ import logging
 
 
 def get_secret(secret_name="project-onyx/totesys-db-login", region_name="eu-west-2"):
-    """_summary_
+    """retrieves database connection credentials held in AWS secrets manager.
 
     Args:
-        secret_name (str, optional): _description_. Defaults to "project-onyx/totesys-db-login".
-        region_name (str, optional): _description_. Defaults to "eu-west-2".
+        secret_name (str, optional): Secret name to be retrieved. Defaults to "project-onyx/totesys-db-login".
+        region_name (str, optional): AWS region where secrets manager is located. Defaults to "eu-west-2".
 
     Raises:
-        e: _description_
+        e: ClientError. Any error in retrieving secret is logged and exception raised.
 
     Returns:
-        _type_: _description_
+        Dict: Dictionary containing AWS secrets DB connection details
     """
     # Create a Secrets Manager client
     log_message(__name__, 10, "Entered get_secret")
@@ -37,14 +37,16 @@ def get_secret(secret_name="project-onyx/totesys-db-login", region_name="eu-west
 
 
 def format_response(columns, response):
-    """_summary_
+    """Formats the raw database query response into a list of dictionaries 
+    with column names as keys and row values as dictionary values. Datetime 
+    objects are converted to strings
 
     Args:
-        columns (_type_): _description_
-        response (_type_): _description_
+        columns (list): List of column names returned by the database query.
+        response (list): List of rows from raw database data.
 
     Returns:
-        _type_: _description_
+        list: List of dictionaries
     """
     log_message(__name__, 10, "Entered format_response")
     formatted_response = []
@@ -62,11 +64,15 @@ def format_response(columns, response):
 
 def log_message(name, level, message=""):
     """
-    Sends a message to the logger.
+    Sends a message to AWS Cloudwatch.
 
-    :param name: The name of the logger.
-    :param level: The logging level (one of 0, 10, 20, 30, 40, 50).
-    :param message: The message to log.
+    Args:
+        :name: The name of the logger.
+        :level: The logging level (one of 0, 10, 20, 30, 40, 50).
+        :message: The message to log.
+        
+    Returns:
+    None
     """
     logger = logging.getLogger(name)
 

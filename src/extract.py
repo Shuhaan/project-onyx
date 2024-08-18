@@ -22,11 +22,32 @@ logger = logging.getLogger(__name__)
 
 
 def lambda_handler(event, context):
+    """AWS Lambda handler function for extract_from_db_write_to_s3 function.
+
+    Args:
+        event (_type_): _description_
+        context (_type_): _description_
+     
+    Returns:
+        None
+    """   
     log_message(__name__, 10, "Entered lambda_handler")
     extract_from_db_write_to_s3("onyx-totesys-ingested-data-bucket")
 
 
 def extract_from_db_write_to_s3(bucket, s3_client=None):
+    """Connects to a postgres database, then extracts and uploads data to AWS s3 
+    bucket in json format. On each invocation, this function will only extract
+    and upload new data to a new file.
+
+    Args:
+        bucket (String): The name of the AWS s3 bucket to be written to.
+        s3_client (Boto3 client): Boto3 s3 client. Defaults to 
+        boto3.client("s3") if left blank.
+        
+    Returns:
+        None
+    """    
     log_message(__name__, 10, "Entered extract function")
     if not s3_client:
         s3_client = boto3.client("s3")
@@ -71,6 +92,7 @@ def extract_from_db_write_to_s3(bucket, s3_client=None):
 
             # if response doesn't have modified data, don't upload file.
             response = conn.run(query)
+            print(response)
 
             if len(response):
                 columns = [col["name"] for col in conn.columns]
