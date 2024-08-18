@@ -1,7 +1,7 @@
 import pytest, logging
 import pandas as pd
 from extract_lambda.extract import extract
-from transform_lambda.utils import log_message, create_df_from_json
+from transform_lambda.utils import log_message, create_df_from_json_in_bucket
 
 
 class TestLogMessage:
@@ -14,7 +14,7 @@ class TestLogMessage:
 
 
 class TestCreateDFFromJSON:
-    def test_create_df_from_json_returns_data_frame(
+    def test_create_df_from_json_in_bucket_returns_data_frame(
         self,
         aws_credentials,
         s3_client,
@@ -27,7 +27,7 @@ class TestCreateDFFromJSON:
         ingested_files = [bucket["Key"] for bucket in ingested_data_files]
 
         for file in ingested_files:
-            result = create_df_from_json("test-ingested-bucket", file)
+            result = create_df_from_json_in_bucket("test-ingested-bucket", file)
 
             if file.endswith(".json"):
                 assert isinstance(result, pd.DataFrame)

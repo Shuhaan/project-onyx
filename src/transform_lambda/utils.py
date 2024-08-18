@@ -32,7 +32,9 @@ def log_message(name: str, level: int, message: str = ""):
         logger.error("Invalid log level: %d", level)
 
 
-def create_df_from_json(source_bucket: str, file_name: str) -> Optional[pd.DataFrame]:
+def create_df_from_json_in_bucket(
+    source_bucket: str, file_name: str
+) -> Optional[pd.DataFrame]:
     """
     Reads a JSON file from an S3 bucket and converts it to a pandas DataFrame.
 

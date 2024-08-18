@@ -1,7 +1,11 @@
 import boto3, logging
 from botocore.exceptions import ClientError
 from typing import Any
-from transform_lambda.utils import log_message, create_df_from_json, create_dim_date
+from transform_lambda.utils import (
+    log_message,
+    create_df_from_json_in_bucket,
+    create_dim_date,
+)
 
 
 # Configure logging
@@ -61,7 +65,7 @@ def transform(source_bucket: str, files: list, output_bucket: str):
 
     for file in files:
         table = file.split("/")[0]
-        df = create_df_from_json(source_bucket, file)
+        df = create_df_from_json_in_bucket(source_bucket, file)
 
         # Table-specific processing
         if table == "address":
