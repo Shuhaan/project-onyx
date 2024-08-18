@@ -5,25 +5,38 @@ from transform_lambda.utils import log_message, create_df_from_json_in_bucket
 
 
 class TestLogMessage:
-    def test_log_message(self, caplog):
-        caplog.set_level(logging.INFO)
-        result = log_message("function_name", 30, "This is a warning")
-        expected = ["This is a warning"]
-        assert caplog.messages == expected
-        assert "WARNING" in caplog.text
+    @pytest.mark.parametrize(
+        "level, level_name, message",
+        [
+            (10, "DEBUG", "This is a debug message"),
+            (20, "INFO", "This is an info message"),
+            (30, "WARNING", "This is a warning message"),
+            (40, "ERROR", "This is an error message"),
+            (50, "CRITICAL", "This is a critical message"),
+        ],
+        ids=[
+            "Debug level",
+            "Info level",
+            "Warning level",
+            "Error level",
+            "Critical level",
+        ],
+    )
+    def test_log_message_levels(self, caplog, level, level_name, message):
+        caplog.set_level(level)
+        log_message("function_name", level, message)
+
+        assert caplog.messages == [message]
+        assert level_name in caplog.text
 
 
-class TestCreateDFFromJSON:
+class TestCreateDFFromJSONInBucket:
     def test_create_df_from_json_in_bucket_returns_data_frame(
-        self,
-        aws_credentials,
-        s3_client,
-        s3_data_buckets,
-        write_files_to_ingested_data_bucket,
+        self, write_files_to_ingested_data_bucket
     ):
-        ingested_data_files = s3_client.list_objects(Bucket="test-ingested-bucket")[
-            "Contents"
-        ]
+        ingested_data_files = write_files_to_ingested_data_bucket.list_objects(
+            Bucket="test-ingested-bucket"
+        )["Contents"]
         ingested_files = [bucket["Key"] for bucket in ingested_data_files]
 
         for file in ingested_files:
