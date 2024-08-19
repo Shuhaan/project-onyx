@@ -19,13 +19,13 @@ class MockedConnection:
             {"name": "last_updated"},
         ]
         self.rows_data1 = [
-            ["1", "old_data1", "1970-01-01 20:00:00"],
-            ["2", "old_data2", "1970-01-01 20:00:00"],
+            ["1", "old_data1", "1970-01-01 00:00:00"],
+            ["2", "old_data2", "1970-01-01 00:00:00"],
         ]
 
         self.rows_data2 = [
-            ["1", "new_data1", "1980-01-01 20:00:00"],
-            ["2", "new_data2", "1970-01-01 20:00:00"],
+            ["1", "new_data1", "2024-08-19 20:00:00"],
+            ["2", "old_data2", "1970-01-01 00:00:00"],
         ]
 
     def run(self, query):
@@ -39,7 +39,7 @@ class MockedConnection:
 
 class TestExtract:
     def test_extract_writes_all_tables_to_s3_as_directories(
-        self, create_secrets, s3_data_buckets
+        self, aws_credentials, s3_client, s3_data_buckets
     ):
         extract("test-ingested-bucket", s3_data_buckets)
         result_list_bucket = s3_data_buckets.list_objects(
@@ -65,7 +65,7 @@ class TestExtract:
             assert any([folder.startswith(table) for folder in result])
 
     def test_extract_writes_jsons_into_s3_with_correct_structure_from_db(
-        self, create_secrets, s3_data_buckets
+        self, aws_credentials, s3_client, s3_data_buckets
     ):
         extract("test-ingested-bucket", s3_data_buckets)
         result_list_bucket = s3_data_buckets.list_objects(
@@ -83,7 +83,7 @@ class TestExtract:
                     assert content[folder][0]["last_updated"]
 
     def test_extract_writes_jsons_into_s3_with_correct_data_type_from_db(
-        self, create_secrets, s3_data_buckets
+        self, aws_credentials, s3_client, s3_data_buckets
     ):
         extract("test-ingested-bucket", s3_data_buckets)
         result_list_bucket = s3_data_buckets.list_objects(
