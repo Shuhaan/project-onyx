@@ -1,6 +1,4 @@
-import pytest, json  # , boto3
-
-# from moto import mock_aws
+import pytest, json
 from unittest.mock import patch
 from datetime import datetime
 from extract_lambda.extract import extract
@@ -116,7 +114,6 @@ class TestExtract:
                 if 'address' in key:
                     json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
                     json_contents = json_file["Body"].read().decode("utf-8")
-                    # print(json_contents, ' <<< result')
                     assert json.loads(json_contents)["address"][0]["meaningful_data"] == mock_data
         
         verify_extract("old_data1")
