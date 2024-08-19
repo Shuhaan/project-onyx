@@ -105,6 +105,7 @@ class TestExtract:
                     value = content[folder][0]["last_updated"]
                     date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                     assert isinstance(date, datetime)
+                    
 
     @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     # @patch("pg8000.native.Connection", return_value=MockedConnection())
@@ -112,26 +113,57 @@ class TestExtract:
         self, aws_credentials, s3_client, s3_data_buckets
     ):
         extract("test_ingested_bucket", s3_client)
-
         result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
             "Contents"
         ]
-
         result = [bucket["Key"] for bucket in result_list_bucket]
-
+        
+        for key in result:
+            if 'address' in key:
+                json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
+                json_contents = json_file["Body"].read().decode("utf-8")
+                print(json_contents, ' <<< result')
+                assert json.loads(json_contents) == {
+                                        "address": [
+                                            {
+                                                "data_id": "1",
+                                                "meaningful_data": "old_data1",
+                                                "last_updated": "1970-01-01 20:00:00"
+                                            },
+                                            {
+                                                "data_id": "2",
+                                                "meaningful_data": "old_data2",
+                                                "last_updated": "1970-01-01 20:00:00"
+                                            }
+                                        ]
+                                    }
+        
         extract("test_ingested_bucket", s3_client)
-
         result_list_bucket2 = s3_client.list_objects(Bucket="test_ingested_bucket")[
             "Contents"
         ]
-
         result2 = [bucket["Key"] for bucket in result_list_bucket2]
+        
 
-        # print(result, "result")
-        for key in result:
-            if ".txt" not in key:
+        for key in result2:
+            if 'address' in key:
                 json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
                 json_contents = json_file["Body"].read().decode("utf-8")
-                content = json.loads(json_contents)
-                for folder in content:
-                    assert content[folder][0]["meaningful_data"]
+                print(json_contents, ' <<< result2')
+                assert json.loads(json_contents) == {
+                                        "address": [
+                                            {
+                                                "data_id": "1",
+                                                "meaningful_data": "new_data1",
+                                                "last_updated": "1980-01-01 20:00:00"
+                                            },
+                                            {
+                                                "data_id": "2",
+                                                "meaningful_data": "old_data2",
+                                                "last_updated": "1970-01-01 20:00:00"
+                                            }
+                                        ]
+                                    }
+                                                
+                    
+        
