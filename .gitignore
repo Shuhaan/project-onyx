@@ -11,5 +11,5 @@ venv/
 requirements.txt
 .env
 **/__pycache__/
-layers
+**/layer
 *.parquet
