@@ -2,7 +2,7 @@
 
 locals {
   source_files        = ["${path.module}/../src/extract_lambda/connection.py", 
-                         "${path.module}/../src/extract_lambda/utils.py", 
+                         "${path.module}/../src/extract_lambda/extract_utils.py", 
                          "${path.module}/../src/extract_lambda/extract.py"]
 }
 

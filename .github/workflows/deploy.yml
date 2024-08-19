@@ -50,11 +50,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Terraform Init
-        run: make terraform-init
-
       - name: Terraform Format
         run: make terraform-fmt
+
+      - name: Terraform Init
+        run: make terraform-init
 
       - name: Terraform Validate
         run: make terraform-validate
