@@ -1,9 +1,9 @@
-from pg8000 import native
+from pg8000.native import Connection
 from pg8000.exceptions import DatabaseError
 from extract_lambda.utils import get_secret, log_message
 
 
-def connect_to_db() -> native.Connection:
+def connect_to_db() -> Connection:
     """
     Establishes a connection to the PostgreSQL database using credentials
     retrieved from AWS Secrets Manager.
@@ -20,7 +20,7 @@ def connect_to_db() -> native.Connection:
         log_message(
             __name__, 20, "Retrieved secrets from Secrets Manager for DB access"
         )
-        return native.Connection(
+        return Connection(
             user=credentials["USERNAME"],
             password=credentials["PASSWORD"],
             database=credentials["DBNAME"],

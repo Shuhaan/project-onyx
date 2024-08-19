@@ -1,6 +1,7 @@
 import pytest, json
 from datetime import datetime
 from extract_lambda.extract import extract
+from pg8000.exceptions import DatabaseError
 
 
 class TestExtract:
@@ -107,3 +108,16 @@ class TestExtract:
 
         verify_extract("old_data1")
         verify_extract("new_data1")
+
+
+class TestConnection:
+    # def test_connection_returns_mocked_connection(
+    #     self, patch_db_connection
+    # ):
+    #     pass
+
+    def test_connection_failure_raises_database_error(
+        self, db_credentials_fail, patch_db_connection
+    ):
+        with pytest.raises(DatabaseError):
+            con = patch_db_connection(*db_credentials_fail)
