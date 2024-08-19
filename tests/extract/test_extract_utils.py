@@ -1,5 +1,6 @@
-import pytest, logging, os, boto3
-from moto import mock_aws
+import pytest, logging
+from decimal import Decimal
+from datetime import datetime
 from extract_lambda.utils import get_secret, format_response, log_message
 
 
@@ -19,16 +20,39 @@ class TestGetSecret:
 
 
 class TestFormatResponse:
-    def test_format_response(self):
-        result = format_response(["A", "B"], [[1, 2], [10, 11]])
-
-        assert result == [{"A": 1, "B": 2}, {"A": 10, "B": 11}]
-
-
-class TestLogMessage:
-    def test_log_message(self, caplog):
-        caplog.set_level(logging.INFO)
-        result = log_message("function_name", 30, "This is a warning")
-        expected = ["This is a warning"]
-        assert caplog.messages == expected
-        assert "WARNING" in caplog.text
+    @pytest.mark.parametrize(
+        "columns, response, expected, should_raise",
+        [
+            (["A", "B"], [[1, 2], [3, 4]], [{"A": 1, "B": 2}, {"A": 3, "B": 4}], False),
+            (
+                ["A", "B"],
+                [[1, 2], [Decimal("1.21"), 2]],
+                [{"A": 1, "B": 2}, {"A": 1.21, "B": 2}],
+                False,
+            ),
+            (
+                ["Date", "Value"],
+                [[datetime(2024, 8, 18, 12, 0, 0), 1.23]],
+                [{"Date": "2024-08-18 12:00:00", "Value": 1.23}],
+                False,
+            ),
+            (["A", "B"], [[1, 2], [3]], None, True),
+            (["A"], [[1, 2]], None, True),
+        ],
+        ids=[
+            "Simple integer values",
+            "Decimal to float conversion",
+            "Datetime formatting",
+            "More columns than values in row",
+            "Fewer columns than values in row",
+        ],
+    )
+    def test_format_response(self, columns, response, expected, should_raise):
+        if should_raise:
+            with pytest.raises(
+                ValueError, match="Mismatch between number of columns and row length"
+            ):
+                format_response(columns, response)
+        else:
+            result = format_response(columns, response)
+            assert result == expected

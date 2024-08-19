@@ -1,6 +1,7 @@
 import pandas as pd
 import logging, json, boto3
 from datetime import datetime
+from typing import Optional
 
 
 def log_message(name: str, level: int, message: str = ""):
@@ -31,7 +32,9 @@ def log_message(name: str, level: int, message: str = ""):
         logger.error("Invalid log level: %d", level)
 
 
-def create_df_from_json(source_bucket: str, file_name: str) -> pd.DataFrame:
+def create_df_from_json_in_bucket(
+    source_bucket: str, file_name: str
+) -> Optional[pd.DataFrame]:
     """
     Reads a JSON file from an S3 bucket and converts it to a pandas DataFrame.
 
@@ -41,34 +44,29 @@ def create_df_from_json(source_bucket: str, file_name: str) -> pd.DataFrame:
 
     Returns:
         Optional[pd.DataFrame]: A DataFrame containing the data from the JSON file,
-        or None if no data is found for the specified table.
+        or None if there are issues with the file or its content.
     """
-    if file_name.endswith(".json"):
-        s3_client = boto3.client("s3")
-
-        try:
-            # Retrieve the JSON file from S3
-            json_file = s3_client.get_object(Bucket=source_bucket, Key=file_name)
-            json_contents = json_file["Body"].read().decode("utf-8")
-            json_data = json.loads(json_contents)
-
-            # Determine the table name from the file path
-            table = file_name.split("/")[0]
-            data = json_data.get(table, [])
-
-            # Check if data is found and convert to DataFrame
-            if not data:
-                print(f"No data found for table: {table}")
-                return None
-
-            df = pd.DataFrame(data)
-            return df
-
-        except Exception as e:
-            print(f"Error reading or processing file {file_name}: {e}")
-            return None
-    else:
+    if not file_name.endswith(".json"):
         print(f"File {file_name} is not a JSON file.")
+        return None
+
+    s3_client = boto3.client("s3")
+
+    try:
+        # Retrieve the JSON file from S3
+        json_file = s3_client.get_object(Bucket=source_bucket, Key=file_name)
+        json_contents = json_file["Body"].read().decode("utf-8")
+        json_data = json.loads(json_contents)
+
+        # Determine the table name from the file path
+        table = file_name.split("/")[0]
+        data = json_data.get(table, [])
+        df = pd.DataFrame(data)
+
+        return df
+
+    except Exception as e:
+        print(f"Error reading or processing file {file_name}: {e}")
         return None
 
 

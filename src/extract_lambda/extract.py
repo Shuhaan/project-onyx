@@ -97,13 +97,13 @@ def extract(bucket: str, s3_client=None):
                 extracted_json = json.dumps(formatted_response, indent=4)
                 s3_key = f"{table}/{date_str}.json"
                 s3_client.put_object(Bucket=bucket, Key=s3_key, Body=extracted_json)
-                
+
                 log_message(__name__, 20, f"{s3_key} was written to {bucket}")
 
                 # # compile all tables to add to updated-data.json
                 # if not last_extract:
                 #     compiled_data = formatted_response
-                    
+
                 # # if new data found, update the updated-data.json
                 # if "WHERE" in query:
 
@@ -113,7 +113,7 @@ def extract(bucket: str, s3_client=None):
         # if not last_extract:
         #     updated_data_key = "updated-data.json"
         #     s3_client.put_object(Bucket=bucket, Key=updated_data_key, Body=extracted_json)
-                        
+
         store_last_extract = date.strftime("%Y-%m-%d %H:%M:%S")
         s3_client.put_object(
             Bucket=bucket, Key="last_extract.txt", Body=store_last_extract
