@@ -68,43 +68,38 @@ class TestExtract:
         for table in expected:
             assert any([folder.startswith(table) for folder in result])
 
-    @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
-    def test_extract_writes_jsons_into_s3_with_correct_structure_from_db(
-        self, aws_credentials, s3_client, s3_data_buckets, create_secrets
-    ):
-
-        extract("test_ingested_bucket", s3_client)
-        result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
+    def extract_test_data(self, client):
+        extract("test_ingested_bucket", client)
+        result_list_bucket = client.list_objects(Bucket="test_ingested_bucket")[
             "Contents"
         ]
         result = [bucket["Key"] for bucket in result_list_bucket]
         for key in result:
             if not key.endswith(".txt"):  # Filter out .txt files
-                json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
+                json_file = client.get_object(Bucket="test_ingested_bucket", Key=key)
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
-                for folder in content:
-                    assert content[folder][0]["last_updated"]
+                return content
+
+
+    @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
+    def test_extract_writes_jsons_into_s3_with_correct_structure_from_db(
+        self, aws_credentials, s3_client, s3_data_buckets, create_secrets
+    ):
+        content = self.extract_test_data(s3_client)
+        for folder in content:
+            assert content[folder][0]["last_updated"]
 
     @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_extract_writes_jsons_into_s3_with_correct_data_type_from_db(
         self, aws_credentials, s3_client, s3_data_buckets, create_secrets
     ):
 
-        extract("test_ingested_bucket", s3_client)
-        result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
-            "Contents"
-        ]
-        result = [bucket["Key"] for bucket in result_list_bucket]
-        for key in result:
-            if ".txt" not in key:
-                json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
-                json_contents = json_file["Body"].read().decode("utf-8")
-                content = json.loads(json_contents)
-                for folder in content:
-                    value = content[folder][0]["last_updated"]
-                    date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-                    assert isinstance(date, datetime)
+        content = self.extract_test_data(s3_client)
+        for folder in content:
+            value = content[folder][0]["last_updated"]
+            date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+            assert isinstance(date, datetime)
 
     @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_mocked_connection_patch_working(
@@ -121,7 +116,7 @@ class TestExtract:
                 if 'address' in key:
                     json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
                     json_contents = json_file["Body"].read().decode("utf-8")
-                    print(json_contents, ' <<< result')
+                    # print(json_contents, ' <<< result')
                     assert json.loads(json_contents)["address"][0]["meaningful_data"] == mock_data
         
         verify_extract("old_data1")
