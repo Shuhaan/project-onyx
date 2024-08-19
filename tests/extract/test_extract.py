@@ -6,43 +6,14 @@ from datetime import datetime
 from extract_lambda.extract import extract
 
 
-class MockedConnection:
-    def __init__(
-        self, user="user", password="pass", database="db", host="host", port=5432
-    ):
-        self.user = user
-        self.password = password
-        self.database = database
-        self.host = host
-        self.port = port
-        self.columns = [
-            {"name": "data_id"},
-            {"name": "meaningful_data"},
-            {"name": "last_updated"},
-        ]
-        self.rows_data1 = [
-            ["1", "old_data1", "1970-01-01 20:00:00"],
-            ["2", "old_data2", "1970-01-01 20:00:00"],
-        ]
-
-        self.rows_data2 = [
-            ["1", "new_data1", "1980-01-01 20:00:00"],
-            ["2", "old_data2", "1970-01-01 20:00:00"],
-        ]
-
-    def run(self, query):
-        if "WHERE" in query:
-            return self.rows_data2
-        return self.rows_data1
-
-    def close(self):
-        pass
-
-
 class TestExtract:
-    @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_extract_writes_all_tables_to_s3_as_directories(
-        self, aws_credentials, s3_client, s3_data_buckets, create_secrets
+        self,
+        patch_db_connection,
+        aws_credentials,
+        s3_client,
+        s3_data_buckets,
+        create_secrets,
     ):
 
         extract("test_ingested_bucket", s3_client)
@@ -68,9 +39,13 @@ class TestExtract:
         for table in expected:
             assert any([folder.startswith(table) for folder in result])
 
-    @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_extract_writes_jsons_into_s3_with_correct_structure_from_db(
-        self, aws_credentials, s3_client, s3_data_buckets, create_secrets
+        self,
+        patch_db_connection,
+        aws_credentials,
+        s3_client,
+        s3_data_buckets,
+        create_secrets,
     ):
 
         extract("test_ingested_bucket", s3_client)
@@ -86,9 +61,13 @@ class TestExtract:
                 for folder in content:
                     assert content[folder][0]["last_updated"]
 
-    @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_extract_writes_jsons_into_s3_with_correct_data_type_from_db(
-        self, aws_credentials, s3_client, s3_data_buckets, create_secrets
+        self,
+        patch_db_connection,
+        aws_credentials,
+        s3_client,
+        s3_data_buckets,
+        create_secrets,
     ):
 
         extract("test_ingested_bucket", s3_client)
@@ -106,10 +85,9 @@ class TestExtract:
                     date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                     assert isinstance(date, datetime)
 
-    @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     # @patch("pg8000.native.Connection", return_value=MockedConnection())
     def test_mocked_connection_patch_working(
-        self, aws_credentials, s3_client, s3_data_buckets
+        self, patch_db_connection, aws_credentials, s3_client, s3_data_buckets
     ):
         extract("test_ingested_bucket", s3_client)
 
