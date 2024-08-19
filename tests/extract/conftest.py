@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 
 @pytest.fixture()
-def secretsmanager_client():
+def secretsmanager_client(aws_credentials):
     with mock_aws():
         yield boto3.client("secretsmanager")
 
@@ -65,6 +65,6 @@ def mock_db_connection():
 
 
 @pytest.fixture()
-def patch_db_connection(mock_db_connection):
+def patch_db_connection():
     with patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection()):
         yield mock_db_connection
