@@ -29,9 +29,8 @@ def create_secrets(secretsmanager_client):
 
 class MockedConnection:
     def __init__(
-        self, user="user", password="pass", database="db", \
-            host="host", port=5432
-        ):
+        self, user="user", password="pass", database="db", host="host", port=5432
+    ):
         self.user = user
         self.password = password
         self.database = database
@@ -51,11 +50,16 @@ class MockedConnection:
             ["1", "new_data1", "1970-01-01 20:00:05"],
             ["2", "new_data2", "1970-01-01 20:00:05"],
         ]
-        
-        if not (self.user=="user" and self.password=="pass" and \
-        database=="db" and host=="host" and port==5432):
+
+        if not (
+            self.user == "user"
+            and self.password == "pass"
+            and database == "db"
+            and host == "host"
+            and port == 5432
+        ):
             raise DatabaseError("connection unsuccessful")
-        else: 
+        else:
             print("connection successful")
 
     def run(self, query):
@@ -68,14 +72,13 @@ class MockedConnection:
 
 
 @pytest.fixture()
-def db_credentials_fail(user="loser", password="TEST", \
-                        database="dbz", host="club", port=1234):
-    return(
-        user, password, database, host, port
-    )
+def db_credentials_fail(
+    user="loser", password="TEST", database="dbz", host="club", port=1234
+):
+    return (user, password, database, host, port)
+
 
 @pytest.fixture()
 def patch_db_connection():
-    with patch("extract_lambda.extract.connect_to_db", \
-               return_value=MockedConnection()):
+    with patch("extract.connect_to_db", return_value=MockedConnection()):
         yield MockedConnection

@@ -1,6 +1,6 @@
 import pytest, json
 from datetime import datetime
-from extract_lambda.extract import extract
+from extract import extract
 from pg8000.exceptions import DatabaseError
 
 
@@ -111,9 +111,7 @@ class TestExtract:
 
 
 class TestConnection:
-    def test_connection_returns_mocked_connection(
-        self, patch_db_connection
-    ):
+    def test_connection_returns_mocked_connection(self, patch_db_connection):
         assert patch_db_connection.__name__ == "MockedConnection"
 
     def test_connection_failure_raises_database_error(
@@ -122,10 +120,9 @@ class TestConnection:
         with pytest.raises(DatabaseError, match="connection unsuccessful"):
             patch_db_connection(*db_credentials_fail)
 
-
     def test_connect_to_db_success(self, patch_db_connection):
         conn = patch_db_connection()
-        
+
         assert conn.user == "user"
         assert conn.password == "pass"
         assert conn.database == "db"
