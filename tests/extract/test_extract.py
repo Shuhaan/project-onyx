@@ -4,7 +4,6 @@ import pytest, json  # , boto3
 from unittest.mock import patch
 from datetime import datetime
 from extract_lambda.extract import extract
-from extract_lambda.utils import format_response
 
 
 class MockedConnection:
