@@ -110,7 +110,7 @@ class TestExtract:
     def test_mocked_connection_patch_working(
         self, aws_credentials, s3_client, s3_data_buckets
     ):
-        def verify_extract(validated_data):
+        def verify_extract(mock_data):
             extract("test_ingested_bucket", s3_client)
             result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
                 "Contents"
@@ -122,7 +122,7 @@ class TestExtract:
                     json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
                     json_contents = json_file["Body"].read().decode("utf-8")
                     print(json_contents, ' <<< result')
-                    assert json.loads(json_contents)["address"][0]["meaningful_data"] == validated_data
+                    assert json.loads(json_contents)["address"][0]["meaningful_data"] == mock_data
         
         verify_extract("old_data1")
         verify_extract("new_data1")
