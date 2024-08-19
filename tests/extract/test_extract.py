@@ -67,43 +67,65 @@ class TestExtract:
             assert any([folder.startswith(table) for folder in result])
 
     def extract_test_data(self, client):
+        """
+        Utility test for extracting data from mock bucket
+
+        :param client (s3_client): required to give access to the mocked client.
+
+        :return: list: list of dictionaries for the table data.
+        """        
         extract("test_ingested_bucket", client)
-        result_list_bucket = client.list_objects(Bucket="test_ingested_bucket")[
+        result_list_from_bucket = client.list_objects(Bucket="test_ingested_bucket")[
             "Contents"
         ]
-        result = [bucket["Key"] for bucket in result_list_bucket]
+        result = [obj["Key"] for obj in result_list_from_bucket]
+        all_tables = []
         for key in result:
-            if not key.endswith(".txt"):  # Filter out .txt files
+            if not key.endswith(".txt"):  # Filter out last_extract.txt file
                 json_file = client.get_object(Bucket="test_ingested_bucket", Key=key)
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
-                return content
+                all_tables.append(content)
+        return all_tables
 
 
     @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_extract_writes_jsons_into_s3_with_correct_structure_from_db(
         self, aws_credentials, s3_client, s3_data_buckets, create_secrets
     ):
-        content = self.extract_test_data(s3_client)
-        for folder in content:
-            assert content[folder][0]["last_updated"]
+        all_tables = self.extract_test_data(s3_client)
+        for dict_table in all_tables:
+            print(dict_table)
+            for table_data in dict_table.values():
+                print (table_data)
+                assert table_data[0]["last_updated"]
 
     @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_extract_writes_jsons_into_s3_with_correct_data_type_from_db(
         self, aws_credentials, s3_client, s3_data_buckets, create_secrets
     ):
 
-        content = self.extract_test_data(s3_client)
-        for folder in content:
-            value = content[folder][0]["last_updated"]
-            date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-            assert isinstance(date, datetime)
+        all_tables = self.extract_test_data(s3_client)
+        for dict_table in all_tables:
+            print(dict_table)
+            for table_data in dict_table.values():
+                value = table_data[0]["last_updated"]
+                date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+                assert isinstance(date, datetime)
 
     @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
     def test_mocked_connection_patch_working(
         self, aws_credentials, s3_client, s3_data_buckets
     ):
         def verify_extract(mock_data):
+            """
+            Utility test for verifying data from mock bucket.
+            Asserts if data in bucket is consistent with mock_data.
+
+            :param mock_data: required to give access to the mocked client.
+
+            :return: None
+            """       
             extract("test_ingested_bucket", s3_client)
             result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
                 "Contents"
