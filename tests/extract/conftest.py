@@ -1,4 +1,4 @@
-import pytest, boto3
+import pytest, boto3, json
 from moto import mock_aws
 from unittest.mock import patch
 
