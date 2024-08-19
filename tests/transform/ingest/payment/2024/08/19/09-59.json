@@ -1,0 +1,32 @@
+{
+    "payment": [
+        {
+            "payment_id": 13864,
+            "created_at": "2024-08-19 09:57:09",
+            "last_updated": "2024-08-19 09:57:09",
+            "transaction_id": 13864,
+            "counterparty_id": 4,
+            "payment_amount": 162135.27,
+            "currency_id": 1,
+            "payment_type_id": 1,
+            "paid": false,
+            "payment_date": "2024-08-20",
+            "company_ac_number": 78657591,
+            "counterparty_ac_number": 86820429
+        },
+        {
+            "payment_id": 13865,
+            "created_at": "2024-08-19 09:58:09",
+            "last_updated": "2024-08-19 09:58:09",
+            "transaction_id": 13865,
+            "counterparty_id": 15,
+            "payment_amount": 581519.47,
+            "currency_id": 2,
+            "payment_type_id": 3,
+            "paid": false,
+            "payment_date": "2024-08-20",
+            "company_ac_number": 43048708,
+            "counterparty_ac_number": 84550006
+        }
+    ]
+}

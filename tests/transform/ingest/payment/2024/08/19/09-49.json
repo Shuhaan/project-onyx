@@ -1,0 +1,18 @@
+{
+    "payment": [
+        {
+            "payment_id": 13863,
+            "created_at": "2024-08-19 09:44:09",
+            "last_updated": "2024-08-19 09:44:09",
+            "transaction_id": 13863,
+            "counterparty_id": 3,
+            "payment_amount": 181741.65,
+            "currency_id": 2,
+            "payment_type_id": 1,
+            "paid": false,
+            "payment_date": "2024-08-20",
+            "company_ac_number": 67369064,
+            "counterparty_ac_number": 29666314
+        }
+    ]
+}

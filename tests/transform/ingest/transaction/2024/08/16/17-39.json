@@ -1,0 +1,20 @@
+{
+    "transaction": [
+        {
+            "transaction_id": 13849,
+            "transaction_type": "PURCHASE",
+            "sales_order_id": null,
+            "purchase_order_id": 4082,
+            "created_at": "2024-08-16 17:30:10",
+            "last_updated": "2024-08-16 17:30:10"
+        },
+        {
+            "transaction_id": 13850,
+            "transaction_type": "PURCHASE",
+            "sales_order_id": null,
+            "purchase_order_id": 4083,
+            "created_at": "2024-08-16 17:31:09",
+            "last_updated": "2024-08-16 17:31:09"
+        }
+    ]
+}

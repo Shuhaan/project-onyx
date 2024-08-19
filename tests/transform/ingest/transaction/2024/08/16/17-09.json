@@ -1,0 +1,28 @@
+{
+    "transaction": [
+        {
+            "transaction_id": 13846,
+            "transaction_type": "SALE",
+            "sales_order_id": 9765,
+            "purchase_order_id": null,
+            "created_at": "2024-08-16 16:42:10",
+            "last_updated": "2024-08-16 16:42:10"
+        },
+        {
+            "transaction_id": 13847,
+            "transaction_type": "SALE",
+            "sales_order_id": 9766,
+            "purchase_order_id": null,
+            "created_at": "2024-08-16 16:56:10",
+            "last_updated": "2024-08-16 16:56:10"
+        },
+        {
+            "transaction_id": 13848,
+            "transaction_type": "SALE",
+            "sales_order_id": 9767,
+            "purchase_order_id": null,
+            "created_at": "2024-08-16 16:57:09",
+            "last_updated": "2024-08-16 16:57:09"
+        }
+    ]
+}

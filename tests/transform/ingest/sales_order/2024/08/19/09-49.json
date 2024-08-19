@@ -1,0 +1,18 @@
+{
+    "sales_order": [
+        {
+            "sales_order_id": 9777,
+            "created_at": "2024-08-19 09:44:09",
+            "last_updated": "2024-08-19 09:44:09",
+            "design_id": 27,
+            "staff_id": 16,
+            "counterparty_id": 3,
+            "units_sold": 84531,
+            "unit_price": 2.15,
+            "currency_id": 2,
+            "agreed_delivery_date": "2024-08-24",
+            "agreed_payment_date": "2024-08-20",
+            "agreed_delivery_location_id": 13
+        }
+    ]
+}
