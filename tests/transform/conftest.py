@@ -1,5 +1,5 @@
 import pytest
-from extract_lambda.extract import extract
+from extract import extract
 
 
 @pytest.fixture(scope="function")

@@ -11,8 +11,11 @@ SHELL := /bin/bash
 PROFILE = default
 PIP := pip
 
-EXTRACT_LAMBDA_DIR := src/extract_lambda
-TRANSFORM_LAMBDA_DIR := src/transform_lambda
+# Define the source directories
+SRC_DIRS := src/extract_lambda src/transform_lambda
+# Define the PYTHONPATH to include both directories
+PYTHONPATH := $(shell echo $(SRC_DIRS) | tr ' ' ':')
+
 TEST_DIR := tests
 
 ## Create python interpreter environment.
@@ -76,14 +79,12 @@ run-black:
 
 ## Run the unit tests
 unit-test:
-	$(call execute_in_env, PYTHONPATH=${EXTRACT_LAMBDA_DIR} pytest)
-## $(call execute_in_env, PYTHONPATH=${TRANSFORM_LAMBDA_DIR} pytest)
+	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} pytest)
 
 ## Run the coverage check
 check-coverage:
-	$(call execute_in_env, PYTHONPATH=${EXTRACT_LAMBDA_DIR} pytest --cov=src tests/)
-## $(call execute_in_env, PYTHONPATH=${TRANSFORM_LAMBDA_DIR} pytest --cov=src tests/)
-
+	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} pytest --cov=src tests/)
+	
 ## Run all checks
 run-checks: security-test run-black check-coverage
 

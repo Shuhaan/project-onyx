@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from transform_lambda.utils import create_df_from_json_in_bucket
+from transform_utils import create_df_from_json_in_bucket
 
 
 class TestCreateDFFromJSONInBucket:

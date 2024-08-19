@@ -1,5 +1,5 @@
 import pytest
-from transform_lambda.transform import transform
+from transform import transform
 
 
 class TestTransform:

@@ -1,6 +1,6 @@
 import pytest, json
 from datetime import datetime
-from extract_lambda.extract import extract
+from extract import extract
 
 
 class TestExtract:
