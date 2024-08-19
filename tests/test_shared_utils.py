@@ -1,5 +1,5 @@
 import pytest
-from transform_lambda.utils import log_message
+from extract_utils import log_message
 
 class TestLogMessage:
     @pytest.mark.parametrize(

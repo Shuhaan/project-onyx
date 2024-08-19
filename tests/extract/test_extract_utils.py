@@ -1,7 +1,7 @@
 import pytest
 from decimal import Decimal
 from datetime import datetime
-from extract_lambda.utils import get_secret, format_response
+from extract_utils import get_secret, format_response
 
 
 class TestGetSecret:

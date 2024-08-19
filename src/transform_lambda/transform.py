@@ -1,7 +1,7 @@
 import boto3, logging
 from botocore.exceptions import ClientError
 from typing import Any
-from transform_lambda.utils import (
+from transform_utils import (
     log_message,
     create_df_from_json_in_bucket,
     create_dim_date,

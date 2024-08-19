@@ -2,8 +2,8 @@ import json, os, boto3, logging
 from datetime import datetime
 from botocore.exceptions import ClientError
 from typing import Any
-from extract_lambda.utils import format_response, log_message
-from extract_lambda.connection import connect_to_db
+from extract_utils import format_response, log_message
+from connection import connect_to_db
 
 
 # Configure logging
