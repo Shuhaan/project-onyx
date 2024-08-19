@@ -43,8 +43,8 @@ class TestExtract:
         self, aws_credentials, s3_client, s3_data_buckets, create_secrets
     ):
 
-        extract("test_ingested_bucket", s3_client)
-        result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
+        extract("test-ingested-bucket", s3_client)
+        result_list_bucket = s3_client.list_objects(Bucket="test-ingested-bucket")[
             "Contents"
         ]
         result = [file_data["Key"] for file_data in result_list_bucket]
@@ -74,15 +74,15 @@ class TestExtract:
 
         :return: list: list of dictionaries for the table data.
         """        
-        extract("test_ingested_bucket", client)
-        result_list_from_bucket = client.list_objects(Bucket="test_ingested_bucket")[
+        extract("test-ingested-bucket", client)
+        result_list_from_bucket = client.list_objects(Bucket="test-ingested-bucket")[
             "Contents"
         ]
         result = [obj["Key"] for obj in result_list_from_bucket]
         all_tables = []
         for key in result:
             if not key.endswith(".txt"):  # Filter out last_extract.txt file
-                json_file = client.get_object(Bucket="test_ingested_bucket", Key=key)
+                json_file = client.get_object(Bucket="test-ingested-bucket", Key=key)
                 json_contents = json_file["Body"].read().decode("utf-8")
                 content = json.loads(json_contents)
                 all_tables.append(content)
@@ -126,15 +126,15 @@ class TestExtract:
 
             :return: None
             """       
-            extract("test_ingested_bucket", s3_client)
-            result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
+            extract("test-ingested-bucket", s3_client)
+            result_list_bucket = s3_client.list_objects(Bucket="test-ingested-bucket")[
                 "Contents"
             ]
             result = [bucket["Key"] for bucket in result_list_bucket]
             
             for key in result:
                 if 'address' in key:
-                    json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
+                    json_file = s3_client.get_object(Bucket="test-ingested-bucket", Key=key)
                     json_contents = json_file["Body"].read().decode("utf-8")
                     assert json.loads(json_contents)["address"][0]["meaningful_data"] == mock_data
         
