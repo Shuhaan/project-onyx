@@ -63,7 +63,6 @@ def create_df_from_json_in_bucket(
         # Determine the table name from the file path
         table = file_name.split("/")[0]
         data = json_data.get(table, [])
-        print(data)
         df = pd.DataFrame(data)
 
         return df
@@ -100,7 +99,7 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
     dim_date["quarter"] = dim_date["date_id"].dt.quarter
 
     dim_date["date_id"] = dim_date["date_id"].dt.strftime(
-        "%Y%m%d"
-    )  # Format date_id as YYYYMMDD
+        "%Y-%m-%d"
+    )  # Format date_id as YYYY-MM-DD
 
     return dim_date

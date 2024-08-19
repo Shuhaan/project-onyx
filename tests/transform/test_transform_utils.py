@@ -30,4 +30,6 @@ class TestCreateDimDate:
     def test_create_dim_date(self, write_files_to_ingested_data_bucket):
         result = create_dim_date("1950-01-01", "2025-12-31")
 
-        assert isinstance(result, pd.DataFrame) # change assertion to verify data in dataframe
+        assert isinstance(
+            result, pd.DataFrame
+        )  # change assertion to verify data in dataframe

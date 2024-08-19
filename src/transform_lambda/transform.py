@@ -79,12 +79,16 @@ def transform(source_bucket: str, files: list, output_bucket: str):
             output_file = "dim_design.parquet"
 
         elif table == "currency":
+            # Define the mapping of currency codes to currency names
+            currency_mapping = {
+                "GBP": "British Pound Sterling",
+                "USD": "United States Dollar",
+                "EUR": "Euros",
+            }
+
+            # Drop the columns and add the new currency_name column based on the currency_code
             df = df.drop(["created_at", "last_updated"], axis=1).assign(
-                currency_name=[
-                    "British Pound Sterling",
-                    "United States Dollar",
-                    "Euros",
-                ]
+                currency_name=df["currency_code"].map(currency_mapping)
             )
             output_file = "dim_currency.parquet"
 
