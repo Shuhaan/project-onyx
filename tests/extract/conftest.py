@@ -51,13 +51,12 @@ class MockedConnection:
             ["1", "new_data1", "1970-01-01 20:00:05"],
             ["2", "new_data2", "1970-01-01 20:00:05"],
         ]
-        # validate connection details
-        try:
-            self.user=="user" and self.password=="pass" and \
-            database=="db" and host=="host" and port==5432
+        
+        if not (self.user=="user" and self.password=="pass" and \
+        database=="db" and host=="host" and port==5432):
+            raise DatabaseError("connection unsuccessful")
+        else: 
             print("connection successful")
-        except DatabaseError:
-            raise DatabaseError(message="test connection failed")
 
     def run(self, query):
         if "WHERE" in query:
@@ -69,8 +68,8 @@ class MockedConnection:
 
 
 @pytest.fixture()
-def db_credentials_fail(user="user", password="TEST", \
-                        database="db", host="host", port=5432):
+def db_credentials_fail(user="loser", password="TEST", \
+                        database="dbz", host="club", port=1234):
     return(
         user, password, database, host, port
     )

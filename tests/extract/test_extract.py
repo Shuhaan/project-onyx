@@ -111,13 +111,23 @@ class TestExtract:
 
 
 class TestConnection:
-    # def test_connection_returns_mocked_connection(
-    #     self, patch_db_connection
-    # ):
-    #     pass
+    def test_connection_returns_mocked_connection(
+        self, patch_db_connection
+    ):
+        assert patch_db_connection.__name__ == "MockedConnection"
 
     def test_connection_failure_raises_database_error(
         self, db_credentials_fail, patch_db_connection
     ):
-        with pytest.raises(DatabaseError):
-            con = patch_db_connection(*db_credentials_fail)
+        with pytest.raises(DatabaseError, match="connection unsuccessful"):
+            patch_db_connection(*db_credentials_fail)
+
+
+    def test_connect_to_db_success(self, patch_db_connection):
+        conn = patch_db_connection()
+        
+        assert conn.user == "user"
+        assert conn.password == "pass"
+        assert conn.database == "db"
+        assert conn.host == "host"
+        assert conn.port == 5432
