@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  runs-tests:
-    name: runs-tests
+  run-tests:
+    name: Run Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +36,7 @@ jobs:
 
   deploy-lambda:
     name: Deploy Lambda
-    needs: runs-tests
+    needs: run-tests
     runs-on: ubuntu-latest
 
     steps:
