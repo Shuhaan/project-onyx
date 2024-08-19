@@ -29,6 +29,7 @@ class TestExtract:
         ]
 
         for table in expected:
+            print("assertion 1")
             assert any([folder.startswith(table) for folder in result])
 
     def extract_test_data(self, client):
@@ -58,9 +59,8 @@ class TestExtract:
     ):
         all_tables = self.extract_test_data(s3_data_buckets)
         for dict_table in all_tables:
-            print(dict_table)
             for table_data in dict_table.values():
-                print(table_data)
+                print("assertion 2")
                 assert table_data[0]["last_updated"]
 
     def test_extract_writes_jsons_into_s3_with_correct_data_type_from_db(
@@ -69,10 +69,10 @@ class TestExtract:
 
         all_tables = self.extract_test_data(s3_data_buckets)
         for dict_table in all_tables:
-            print(dict_table)
             for table_data in dict_table.values():
                 value = table_data[0]["last_updated"]
                 date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+                print("assertion 3")
                 assert isinstance(date, datetime)
 
     def test_mocked_connection_patch_working(
@@ -99,6 +99,7 @@ class TestExtract:
                         Bucket="test-ingested-bucket", Key=key
                     )
                     json_contents = json_file["Body"].read().decode("utf-8")
+                    print("assertion 4")
                     assert (
                         json.loads(json_contents)["address"][0]["meaningful_data"]
                         == mock_data

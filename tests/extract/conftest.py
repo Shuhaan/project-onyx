@@ -60,11 +60,6 @@ class MockedConnection:
 
 
 @pytest.fixture()
-def mock_db_connection():
-    return MockedConnection()
-
-
-@pytest.fixture()
 def patch_db_connection():
     with patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection()):
-        yield mock_db_connection
+        yield MockedConnection()
