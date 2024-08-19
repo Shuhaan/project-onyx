@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  test-and-package:
-    name: Test and Package Lambdas
+  runs-tests:
+    name: runs-tests
     runs-on: ubuntu-latest
 
     steps:
@@ -19,19 +19,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Create Python environment
-        run: make create-environment
-
       - name: Install dependencies
         run: make requirements
 
-      - name: Set up development tools
+      - name: Set up dev
         run: make dev-setup
 
-      - name: Package all Lambdas
-        run: make package-all
-
-      - name: Run tests and checks
+      - name: Run tests
         env:
           HOST: ${{ secrets.HOST }}
           USERNAME: ${{ secrets.USERNAME }}
@@ -42,7 +36,7 @@ jobs:
 
   deploy-lambda:
     name: Deploy Lambda
-    needs: test-and-package
+    needs: runs-tests
     runs-on: ubuntu-latest
 
     steps:
@@ -59,9 +53,6 @@ jobs:
       - name: Terraform Format
         run: make terraform-fmt
 
-      - name: Terraform Init
-        run: make terraform-init
-
       - name: Terraform Validate
         run: make terraform-validate
 
@@ -70,6 +61,3 @@ jobs:
 
       - name: Deploy with Terraform
         run: make terraform-apply
-
-      - name: Clean up Terraform Plan
-        run: rm -f terraform/tfplan

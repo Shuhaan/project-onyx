@@ -85,21 +85,6 @@ check-coverage:
 ## Run all checks
 run-checks: security-test run-black check-coverage
 
-## Package Extract Lambda
-package-extract-lambda:
-	$(call execute_in_env, cd $(EXTRACT_LAMBDA_DIR) && pip-compile requirements.in)
-	$(call execute_in_env, cd $(EXTRACT_LAMBDA_DIR) && pip install -r requirements.txt -t ../../layers/extract/python/)
-	$(call execute_in_env, cd $(EXTRACT_LAMBDA_DIR) && zip -r9 ../../layers/extract_layer.zip ../../layers/extract/python/)
-
-## Package Transform Lambda
-package-transform-lambda:
-	$(call execute_in_env, cd $(TRANSFORM_LAMBDA_DIR) && pip-compile requirements.in)
-	$(call execute_in_env, cd $(TRANSFORM_LAMBDA_DIR) && pip install -r requirements.txt -t ../../layers/transform/python/)
-	$(call execute_in_env, cd $(TRANSFORM_LAMBDA_DIR) && zip -r9 ../../layers/transform_layer.zip ../../layers/transform/python/)
-
-## Package all Lambdas
-package-all: package-extract-lambda package-transform-lambda
-
 ################################################################################################################
 # Terraform Commands
 ## Format Terraform files
@@ -124,10 +109,10 @@ terraform-apply:
 
 ## Destroy Terraform-managed infrastructure
 terraform-destroy:
-	cd terraform && terraform destroy -auto-approve
+	cd terraform && terraform destroy
 
 ## Deploy infrastructure with Terraform
-deploy: terraform-fmt terraform-init terraform-validate terraform-plan terraform-apply
+deploy: terraform-fmt terraform-validate terraform-plan terraform-apply
 
 ## Clean up environment
 clean:
@@ -135,3 +120,4 @@ clean:
 	find . -type f -name '*.pyc' -delete
 	find . -type d -name '__pycache__' -delete
 	find . -type f -name '*.txt' -delete
+	

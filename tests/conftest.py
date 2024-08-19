@@ -20,9 +20,9 @@ def s3_client():
 
 @pytest.fixture()
 def s3_data_buckets(s3_client):
-    print("creating test_injested_bucket")
+    print("creating test_ingested_bucket")
     s3_client.create_bucket(
-        Bucket="test_injested_bucket",
+        Bucket="test_ingested_bucket",
         CreateBucketConfiguration={
             'LocationConstraint': 'eu-west-2'
             }
