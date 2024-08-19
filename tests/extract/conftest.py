@@ -1,5 +1,29 @@
-import pytest
+import pytest, boto3
+from moto import mock_aws
 from unittest.mock import patch
+
+
+@pytest.fixture()
+def secretsmanager_client():
+    with mock_aws():
+        yield boto3.client("secretsmanager")
+
+
+@pytest.fixture()
+def create_secrets(secretsmanager_client):
+    # load_dotenv()
+    secret_string = {
+        "USERNAME": "user",  # os.getenv("USERNAME")
+        "PASSWORD": "pass",  # os.getenv("PASSWORD")
+        "HOST": "host",  # os.getenv("HOST")
+        "PORT": 5432,  # os.getenv("PORT")
+        "DBNAME": "db",  # os.getenv("DATABASE")
+    }
+    secret = json.dumps(secret_string)
+    secretsmanager_client.create_secret(
+        Name="project-onyx/totesys-db-login", SecretString=secret
+    )
+    return secretsmanager_client
 
 
 class MockedConnection:

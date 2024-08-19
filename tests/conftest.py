@@ -1,6 +1,5 @@
-import pytest, boto3, os, json
+import pytest, boto3, os
 from moto import mock_aws
-from dotenv import load_dotenv
 
 
 # scope="function"
@@ -21,9 +20,9 @@ def s3_client():
 
 @pytest.fixture()
 def s3_data_buckets(s3_client):
-    print("creating test_ingested_bucket")
+    print("creating test-ingested-bucket")
     s3_client.create_bucket(
-        Bucket="test_ingested_bucket",
+        Bucket="test-ingested-bucket",
         CreateBucketConfiguration={
             'LocationConstraint': 'eu-west-2'
             }
@@ -34,27 +33,4 @@ def s3_data_buckets(s3_client):
             "LocationConstraint": "eu-west-2"
         },
     )
-    # print(s3_client.list_buckets())
     return s3_client
-
-
-@pytest.fixture()
-def secretsmanager_client():
-    with mock_aws():
-        yield boto3.client("secretsmanager")
-
-
-@pytest.fixture()
-def create_secrets(secretsmanager_client):
-    # load_dotenv()
-    secret_string = {
-        "USERNAME": "user",#os.getenv("USERNAME"),
-        "PASSWORD": "pass",#os.getenv("PASSWORD"),
-        "HOST": "host",#os.getenv("HOST"),
-        "PORT": 5432,#os.getenv("PORT"),
-        "DBNAME": "db"#os.getenv("DATABASE"),
-    }
-    secret = json.dumps(secret_string)
-    secretsmanager_client.create_secret(
-        Name="project-onyx/totesys-db-login", SecretString=secret
-    )

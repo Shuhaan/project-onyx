@@ -1,7 +1,7 @@
-import pytest, logging
+import pytest
 from decimal import Decimal
 from datetime import datetime
-from extract_lambda.utils import get_secret, format_response, log_message
+from extract_lambda.utils import get_secret, format_response
 
 
 class TestGetSecret:
