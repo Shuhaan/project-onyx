@@ -2,6 +2,7 @@ import pytest, boto3, os, json
 from moto import mock_aws
 from dotenv import load_dotenv
 
+
 # scope="function"
 @pytest.fixture()
 def aws_credentials():
@@ -33,7 +34,8 @@ def s3_data_buckets(s3_client):
             "LocationConstraint": "eu-west-2"
         },
     )
-    # return s3_client
+    # print(s3_client.list_buckets())
+    return s3_client
 
 
 @pytest.fixture()
