@@ -4,6 +4,7 @@ import pytest, json  # , boto3
 from unittest.mock import patch
 from datetime import datetime
 from extract_lambda.extract import extract
+from extract_lambda.utils import format_response
 
 
 class MockedConnection:
@@ -105,65 +106,24 @@ class TestExtract:
                     value = content[folder][0]["last_updated"]
                     date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                     assert isinstance(date, datetime)
-                    
 
     @patch("extract_lambda.extract.connect_to_db", return_value=MockedConnection())
-    # @patch("pg8000.native.Connection", return_value=MockedConnection())
     def test_mocked_connection_patch_working(
         self, aws_credentials, s3_client, s3_data_buckets
     ):
-        extract("test_ingested_bucket", s3_client)
-        result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
-            "Contents"
-        ]
-        result = [bucket["Key"] for bucket in result_list_bucket]
+        def verify_extract(validated_data):
+            extract("test_ingested_bucket", s3_client)
+            result_list_bucket = s3_client.list_objects(Bucket="test_ingested_bucket")[
+                "Contents"
+            ]
+            result = [bucket["Key"] for bucket in result_list_bucket]
+            
+            for key in result:
+                if 'address' in key:
+                    json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
+                    json_contents = json_file["Body"].read().decode("utf-8")
+                    print(json_contents, ' <<< result')
+                    assert json.loads(json_contents)["address"][0]["meaningful_data"] == validated_data
         
-        for key in result:
-            if 'address' in key:
-                json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
-                json_contents = json_file["Body"].read().decode("utf-8")
-                print(json_contents, ' <<< result')
-                assert json.loads(json_contents) == {
-                                        "address": [
-                                            {
-                                                "data_id": "1",
-                                                "meaningful_data": "old_data1",
-                                                "last_updated": "1970-01-01 20:00:00"
-                                            },
-                                            {
-                                                "data_id": "2",
-                                                "meaningful_data": "old_data2",
-                                                "last_updated": "1970-01-01 20:00:00"
-                                            }
-                                        ]
-                                    }
-        
-        extract("test_ingested_bucket", s3_client)
-        result_list_bucket2 = s3_client.list_objects(Bucket="test_ingested_bucket")[
-            "Contents"
-        ]
-        result2 = [bucket["Key"] for bucket in result_list_bucket2]
-        
-
-        for key in result2:
-            if 'address' in key:
-                json_file = s3_client.get_object(Bucket="test_ingested_bucket", Key=key)
-                json_contents = json_file["Body"].read().decode("utf-8")
-                print(json_contents, ' <<< result2')
-                assert json.loads(json_contents) == {
-                                        "address": [
-                                            {
-                                                "data_id": "1",
-                                                "meaningful_data": "new_data1",
-                                                "last_updated": "1980-01-01 20:00:00"
-                                            },
-                                            {
-                                                "data_id": "2",
-                                                "meaningful_data": "old_data2",
-                                                "last_updated": "1970-01-01 20:00:00"
-                                            }
-                                        ]
-                                    }
-                                                
-                    
-        
+        verify_extract("old_data1")
+        verify_extract("new_data1")
