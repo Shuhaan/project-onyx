@@ -8,12 +8,7 @@ class TestGetSecret:
     def test_get_secret(self, secretsmanager_client):
         secretsmanager_client.create_secret(
             Name="aSecret",
-            SecretString=str(
-                """{
-                        "username":"userId",
-                        "password":"password"
-                    }"""
-            ),
+            SecretString=str("""{"username": "userId", "password": "password"}"""),
         )
         response = get_secret(secret_name="aSecret", region_name="eu-west-2")
         assert response == {"username": "userId", "password": "password"}
