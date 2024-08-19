@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  runs-tests:
-    name: runs-tests
+  test-and-package:
+    name: Test and Package Lambdas
     runs-on: ubuntu-latest
 
     steps:
@@ -19,13 +19,19 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Create Python environment
+        run: make create-environment
+
       - name: Install dependencies
         run: make requirements
 
-      - name: Set up dev
+      - name: Set up development tools
         run: make dev-setup
 
-      - name: Run tests
+      - name: Package all Lambdas
+        run: make package-all
+
+      - name: Run tests and checks
         env:
           HOST: ${{ secrets.HOST }}
           USERNAME: ${{ secrets.USERNAME }}
@@ -35,8 +41,8 @@ jobs:
         run: make run-checks
 
   deploy-lambda:
-    name: deploy-lambda
-    needs: runs-tests
+    name: Deploy Lambda
+    needs: test-and-package
     runs-on: ubuntu-latest
 
     steps:
@@ -50,14 +56,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Terraform Format
+        run: make terraform-fmt
+
       - name: Terraform Init
-        working-directory: terraform
-        run: terraform init
+        run: make terraform-init
+
+      - name: Terraform Validate
+        run: make terraform-validate
 
       - name: Terraform Plan
-        working-directory: terraform     
-        run: terraform plan
+        run: make terraform-plan
 
-      - name: Terraform Apply
-        working-directory: terraform
-        run: terraform apply -auto-approve
+      - name: Deploy with Terraform
+        run: make terraform-apply
+
+      - name: Clean up Terraform Plan
+        run: rm -f terraform/tfplan

@@ -1,24 +1,20 @@
-import boto3
-import json
-#import pandas as pd
+import boto3, logging, json
 from botocore.exceptions import ClientError
-from datetime import datetime
 from decimal import Decimal
-import logging
+from typing import List, Dict, Any
+from datetime import datetime
 
 
-def get_secret(secret_name="project-onyx/totesys-db-login", region_name="eu-west-2"):
-    """_summary_
+def get_secret(
+    secret_name: str = "project-onyx/totesys-db-login", region_name: str = "eu-west-2"
+) -> Dict[str, Any]:
+    """
+    Retrieves a secret from AWS Secrets Manager and parses it as a dictionary.
 
-    Args:
-        secret_name (str, optional): _description_. Defaults to "project-onyx/totesys-db-login".
-        region_name (str, optional): _description_. Defaults to "eu-west-2".
-
-    Raises:
-        e: _description_
-
-    Returns:
-        _type_: _description_
+    :param secret_name: The name of the secret to retrieve.
+    :param region_name: The AWS region where the secret is stored.
+    :raises ClientError: If there is an error retrieving the secret.
+    :return: The secret as a dictionary.
     """
     # Create a Secrets Manager client
     log_message(__name__, 10, "Entered get_secret")
@@ -36,15 +32,15 @@ def get_secret(secret_name="project-onyx/totesys-db-login", region_name="eu-west
         raise e
 
 
-def format_response(columns, response):
-    """_summary_
+def format_response(
+    columns: List[str], response: List[List[Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Formats a response into a list of dictionaries with columns as keys.
 
-    Args:
-        columns (_type_): _description_
-        response (_type_): _description_
-
-    Returns:
-        _type_: _description_
+    :param columns: A list of column names.
+    :param response: A list of rows, where each row is a list of values.
+    :return: A list of dictionaries where each dictionary represents a row.
     """
     log_message(__name__, 10, "Entered format_response")
     formatted_response = []
@@ -60,12 +56,12 @@ def format_response(columns, response):
     return formatted_response
 
 
-def log_message(name, level, message=""):
+def log_message(name: str, level: int, message: str = ""):
     """
-    Sends a message to the logger.
+    Sends a message to the logger at a specified level.
 
     :param name: The name of the logger.
-    :param level: The logging level (one of 0, 10, 20, 30, 40, 50).
+    :param level: The logging level (one of 10, 20, 30, 40, 50).
     :param message: The message to log.
     """
     logger = logging.getLogger(name)
@@ -88,26 +84,10 @@ def log_message(name, level, message=""):
         logger.error("Invalid log level: %d", level)
 
 
-# def create_df_from_json(source_bucket, file_name):
-#     """_summary_
-
-#     Args:
-#         source_bucket (_type_): _description_
-#         file_name (_type_): _description_
-
-#     Returns:
-#         _type_: _description_
-#     """
-    # if file_name.endswith(".json"):
-    #     s3_client = boto3.client("s3")
-
-    #     table = file_name.split("/")[0]
-    #     json_file = s3_client.get_object(Bucket=source_bucket, Key=file_name)
-    #     json_contents = json_file["Body"].read().decode("utf-8")
-    #     data = json.loads(json_contents).get(table, [])
-
-    #     if not data:  # Skip if the JSON content does not contain expected table data
-    #         print(f"No data found for table: {table}")
-    #     else:
-    #         df = pd.DataFrame(data)
-    #         return df
+def get_file_contents(key, s3_client):
+    json_file = s3_client.get_object(
+            Bucket="onyx-totesys-ingested-data-bucket", Key=key
+        )
+    json_contents = json_file["Body"].read().decode("utf-8")
+    content = json.loads(json_contents)
+    return content
