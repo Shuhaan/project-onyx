@@ -1,6 +1,6 @@
 from pg8000 import native
 from pg8000.exceptions import DatabaseError
-from utils import get_secret, log_message
+from extract_utils import get_secret, log_message
 
 
 def connect_to_db() -> native.Connection:
