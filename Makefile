@@ -76,11 +76,13 @@ run-black:
 
 ## Run the unit tests
 unit-test:
-	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} pytest)
+	$(call execute_in_env, PYTHONPATH=${EXTRACT_LAMBDA_DIR} pytest)
+## $(call execute_in_env, PYTHONPATH=${TRANSFORM_LAMBDA_DIR} pytest)
 
 ## Run the coverage check
 check-coverage:
-	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} pytest --cov=src tests/)
+	$(call execute_in_env, PYTHONPATH=${EXTRACT_LAMBDA_DIR} pytest --cov=src tests/)
+## $(call execute_in_env, PYTHONPATH=${TRANSFORM_LAMBDA_DIR} pytest --cov=src tests/)
 
 ## Run all checks
 run-checks: security-test run-black check-coverage
@@ -96,7 +98,7 @@ terraform-init:
 	cd terraform && terraform init
 
 ## Validate Terraform configuration
-terraform-validate: terraform-init
+terraform-validate:
 	cd terraform && terraform validate
 
 ## Plan Terraform changes
