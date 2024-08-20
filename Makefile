@@ -103,19 +103,16 @@ terraform-validate: terraform-init
 	cd terraform && terraform validate
 
 ## Plan Terraform changes
-terraform-plan: terraform-validate
+setup: terraform-validate
 	cd terraform && terraform plan -out=tfplan
 
 ## Apply Terraform changes
-terraform-apply: terraform-plan
+deploy:
 	cd terraform && terraform apply -auto-approve tfplan
 
 ## Destroy Terraform-managed infrastructure
 terraform-destroy:
-	cd terraform && terraform destroy
-
-## Deploy infrastructure with Terraform
-deploy: terraform-fmt terraform-validate terraform-plan terraform-apply
+	cd terraform && terraform destroy -auto-approve
 
 ## Clean up environment
 clean:
