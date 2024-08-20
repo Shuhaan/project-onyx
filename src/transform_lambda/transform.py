@@ -31,7 +31,7 @@ def lambda_handler(event: dict, context: Any):
     :param event: The event data passed to the Lambda function (as a dictionary).
     :param context: The runtime information of the Lambda function (e.g., function name, version).
     """
-    log_message(__name__, 10, "Entered lambda_handler")
+    log_message(__name__, 10, "Entered transform_lambda_handler")
     new_files = (
         event  # You may need to modify this to extract file names from the event
     )
@@ -54,6 +54,8 @@ def transform(source_bucket: str, files: list, output_bucket: str):
         files (List[str]): List of file paths (keys) within the source bucket.
         output_bucket (str): The name of the S3 bucket to upload processed files to.
     """
+    log_message(__name__, 20, "Transform started")
+    
     s3_client = boto3.client("s3")
 
     # Create the dim_date parquet
