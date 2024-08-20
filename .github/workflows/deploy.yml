@@ -54,4 +54,4 @@ jobs:
         run: make setup
 
       - name: Deploy with Terraform
-        run: make terraform-apply
+        run: make deploy
