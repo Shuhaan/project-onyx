@@ -2,6 +2,7 @@ import boto3, logging
 from botocore.exceptions import ClientError
 from typing import Any
 from transform_utils import (
+    get_bucket_contents,
     log_message,
     create_df_from_json_in_bucket,
     create_dim_date,
@@ -31,17 +32,16 @@ def lambda_handler(event: dict, context: Any):
     :param event: The event data passed to the Lambda function (as a dictionary).
     :param context: The runtime information of the Lambda function (e.g., function name, version).
     """
-    log_message(__name__, 10, "Entered lambda_handler")
-    new_files = (
-        event  # You may need to modify this to extract file names from the event
-    )
+    log_message(__name__, 10, "Entered transform_lambda_handler")
+    source_bucket = event["records"][0]["s3"]["bucket"]["name"]
+    new_file = event["records"][0]["s3"]["object"]["key"]  
+    
     transform(
-        "onyx-totesys-ingested-data-bucket",
-        new_files,
-        "onyx-processed-data-bucket",
-        # "1950-01-01",
-        # "2024-12-31",
+        source_bucket,
+        new_file,
+        "onyx-processed-data-bucket"
     )
+
 
 
 def transform(source_bucket: str, files: list, output_bucket: str):
@@ -54,14 +54,18 @@ def transform(source_bucket: str, files: list, output_bucket: str):
         files (List[str]): List of file paths (keys) within the source bucket.
         output_bucket (str): The name of the S3 bucket to upload processed files to.
     """
-    s3_client = boto3.client("s3")
+    log_message(__name__, 20, "Transform started")
 
-    # Create the dim_date parquet
-    dim_date_df = create_dim_date("1950-01-01", "2024-12-31")
-    dim_date_df.to_parquet("dim_date.parquet")
-    s3_client.upload_file(
-        "dim_date.parquet", output_bucket, "dim_date.dim_date.parquet"
-    )
+    s3_client = boto3.client("s3")
+    output_bucket_contents = get_bucket_contents(output_bucket)
+
+    # Create the dim_date parquet if it does not exist
+    if "dim_date.dim_date.parquet" not in output_bucket_contents:
+        dim_date_df = create_dim_date("1970-01-01", "2030-12-31")
+        dim_date_df.to_parquet("dim_date.parquet")
+        s3_client.upload_file(
+            "dim_date.parquet", output_bucket, "dim_date.dim_date.parquet"
+        )
 
     for file in files:
         table = file.split("/")[0]

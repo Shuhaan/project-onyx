@@ -2,6 +2,7 @@ import pandas as pd
 import logging, json, boto3
 from datetime import datetime
 from typing import Optional
+from  pprint import pprint
 
 
 def log_message(name: str, level: int, message: str = ""):
@@ -103,3 +104,13 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
     )  # Format date_id as YYYY-MM-DD
 
     return dim_date
+
+def get_bucket_contents(bucket_name,s3_client=None):
+    if not s3_client:
+        s3_client = boto3.client("s3")
+    response = s3_client.list_objects(Bucket=bucket_name)
+    bucket_content_list =[ele["Key"] for ele in response["Contents"]]
+    return bucket_content_list
+    
+# bucket_name="onyx-totesys-ingested-data-bucket"
+# get_bucket_contents(bucket_name)
