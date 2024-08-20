@@ -58,8 +58,14 @@ def log_message(name: str, level: int, message: str = ""):
         logger.error("Invalid log level: %d", level)
 
 
-def read_parquet_from_s3(bucket_name):
-    s3_client = boto3.client('s3')
+def read_parquet_from_s3(bucket_name, s3_client):
+    bucket_contents = s3_client.list_objects(
+            Bucket="onyx-processed-data-bucket"
+        )["Contents"]
+    bucket_files = [file_data["Key"] for file_data in bucket_contents]
+        
+    for file in bucket_files:    
+        s3_client.get_object(Bucket=bucket_name, Key=file)
     pass
 
 
