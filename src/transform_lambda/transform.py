@@ -39,8 +39,8 @@ def lambda_handler(event: dict, context: Any):
         "onyx-totesys-ingested-data-bucket",
         new_files,
         "onyx-processed-data-bucket",
-        "1950-01-01",
-        "2024-12-31",
+        # "1950-01-01",
+        # "2024-12-31",
     )
 
 
@@ -92,7 +92,7 @@ def transform(source_bucket: str, files: list, output_bucket: str):
             )
             output_file = "dim_currency.parquet"
 
-        elif table == "counterparty":
+        elif table == "counterparty":  # combine counterparty with address table
             df = df.drop(
                 [
                     "commercial_contact",
@@ -111,7 +111,7 @@ def transform(source_bucket: str, files: list, output_bucket: str):
             )
 
         # Save and upload the processed file
-        if output_file:
+        if output_file.endswith(".parquet"):
             df.to_parquet(output_file)
             s3_client.upload_file(output_file, output_bucket, output_file)
             log_message(__name__, 20, f"Uploaded {output_file} to {output_bucket}")
