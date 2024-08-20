@@ -33,7 +33,7 @@ def log_message(name: str, level: int, message: str = ""):
 
 
 def create_df_from_json_in_bucket(
-    source_bucket: str, file_name: str
+    source_bucket: str, file_name: str, s3_client=None
 ) -> Optional[pd.DataFrame]:
     """
     Reads a JSON file from an S3 bucket and converts it to a pandas DataFrame.
@@ -41,16 +41,18 @@ def create_df_from_json_in_bucket(
     Args:
         source_bucket (str): The name of the S3 bucket.
         file_name (str): The key (path) of the JSON file within the S3 bucket.
+        s3_client (client): The mock of AWS S3 buckets.
 
     Returns:
         Optional[pd.DataFrame]: A DataFrame containing the data from the JSON file,
         or None if there are issues with the file or its content.
     """
+    if not s3_client:
+        s3_client = boto3.client("s3")
+
     if not file_name.endswith(".json"):
         print(f"File {file_name} is not a JSON file.")
         return None
-
-    s3_client = boto3.client("s3")
 
     try:
         # Retrieve the JSON file from S3
@@ -97,7 +99,7 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
     dim_date["quarter"] = dim_date["date_id"].dt.quarter
 
     dim_date["date_id"] = dim_date["date_id"].dt.strftime(
-        "%Y%m%d"
-    )  # Format date_id as YYYYMMDD
+        "%Y-%m-%d"
+    )  # Format date_id as YYYY-MM-DD
 
     return dim_date

@@ -13,14 +13,13 @@ def aws_credentials():
 
 
 @pytest.fixture()
-def s3_client():
-    with mock_aws():
+def s3_client(aws_credentials):
+    with mock_aws(aws_credentials):
         yield boto3.client("s3")
 
 
 @pytest.fixture()
 def s3_data_buckets(s3_client):
-    print("creating test-ingested-bucket")
     s3_client.create_bucket(
         Bucket="test-ingested-bucket",
         CreateBucketConfiguration={
@@ -28,7 +27,7 @@ def s3_data_buckets(s3_client):
             }
         )
     s3_client.create_bucket(
-        Bucket="test_processed_bucket",
+        Bucket="test-processed-bucket",
         CreateBucketConfiguration={
             "LocationConstraint": "eu-west-2"
         },

@@ -5,18 +5,18 @@ from transform import transform
 class TestTransform:
     @pytest.mark.xfail
     def test_transform_puts_files_in_processed_data_bucket(
-        self, patch_db_connection, write_files_to_ingested_data_bucket
+        self, write_files_to_ingested_data_bucket
     ):
         ingested_data_files = write_files_to_ingested_data_bucket.list_objects(
-            Bucket="test_ingested_bucket"
+            Bucket="test-ingested-bucket"
         )["Contents"]
         new_files = [bucket["Key"] for bucket in ingested_data_files]
 
-        transform("test_ingested_bucket", new_files, "test_processed_bucket")
+        transform("test-ingested-bucket", new_files, "test-processed-bucket")
 
         result_list_processed_data_bucket = (
             write_files_to_ingested_data_bucket.list_objects(
-                Bucket="test_processed_bucket"
+                Bucket="test-processed-bucket"
             )["Contents"]
         )
         result = [bucket["Key"] for bucket in result_list_processed_data_bucket]
