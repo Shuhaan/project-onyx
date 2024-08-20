@@ -57,7 +57,7 @@ locals {
   layer_zip_name    = "extract_layer.zip"
   layer_name        = "extract_layer"
   requirements_name = "requirements.lambda"
-  requirements_path = "${path.module}/../src/extract_lambda/${local.requirements_name}"
+  requirements_path = "${path.module}/../../src/extract_lambda/${local.requirements_name}"
 }
 
 # create zip file from requirements.txt. Triggers only when the file is updated
@@ -84,7 +84,7 @@ resource "null_resource" "lambda_layer" {
 resource "aws_lambda_layer_version" "extract_layer" {
   layer_name          = "extract_layer"
   compatible_runtimes = [var.python_runtime]
-  s3_bucket           = aws_s3_bucket.onyx_lambda_code_bucket.bucket
+  s3_bucket           = var.lambda_code_bucket
   s3_key              = aws_s3_object.layer_code.key
   depends_on          = [aws_s3_object.layer_code] # triggered only if the zip file is uploaded to the bucket
 }
