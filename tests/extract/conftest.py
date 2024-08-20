@@ -59,7 +59,7 @@ class MockedConnection:
             and host == "host"
             and port == 5432
         ):
-            log_message(__name__, 40, "Connection successful")
+            log_message(__name__, 40, "Connection unsuccessful")
             raise DatabaseError("Connection unsuccessful")
         else:
             log_message(__name__, 20, "Connection successful")

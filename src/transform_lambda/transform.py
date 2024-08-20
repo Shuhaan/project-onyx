@@ -34,14 +34,9 @@ def lambda_handler(event: dict, context: Any):
     """
     log_message(__name__, 10, "Entered transform_lambda_handler")
     source_bucket = event["records"][0]["s3"]["bucket"]["name"]
-    new_file = event["records"][0]["s3"]["object"]["key"]  
-    
-    transform(
-        source_bucket,
-        new_file,
-        "onyx-processed-data-bucket"
-    )
+    new_file = event["records"][0]["s3"]["object"]["key"]
 
+    transform(source_bucket, new_file, "onyx-processed-data-bucket")
 
 
 def transform(source_bucket: str, files: list, output_bucket: str):
