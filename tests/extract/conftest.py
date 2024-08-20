@@ -2,6 +2,7 @@ import pytest, boto3, json
 from pg8000.exceptions import DatabaseError
 from moto import mock_aws
 from unittest.mock import patch
+from extract_utils import log_message
 
 
 @pytest.fixture()
@@ -58,9 +59,10 @@ class MockedConnection:
             and host == "host"
             and port == 5432
         ):
-            raise DatabaseError("connection unsuccessful")
+            log_message(__name__, 40, "Connection successful")
+            raise DatabaseError("Connection unsuccessful")
         else:
-            print("connection successful")
+            log_message(__name__, 20, "Connection successful")
 
     def run(self, query):
         if "WHERE" in query:

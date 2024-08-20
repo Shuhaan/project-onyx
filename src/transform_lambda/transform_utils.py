@@ -51,7 +51,7 @@ def create_df_from_json_in_bucket(
         s3_client = boto3.client("s3")
 
     if not file_name.endswith(".json"):
-        print(f"File {file_name} is not a JSON file.")
+        log_message(__name__, 20, f"File {file_name} is not a JSON file.")
         return None
 
     try:
@@ -68,7 +68,7 @@ def create_df_from_json_in_bucket(
         return df
 
     except Exception as e:
-        print(f"Error reading or processing file {file_name}: {e}")
+        log_message(__name__, 40, f"Error reading or processing file {file_name}: {e}")
         return None
 
 

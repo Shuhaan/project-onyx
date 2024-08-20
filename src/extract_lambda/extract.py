@@ -89,7 +89,6 @@ def extract(bucket: str, s3_client=None):
             query += ";"
 
             response = conn.run(query)
-            # print(response)
             # If response doesn't have modified data, don't upload file.
             if len(response):
                 columns = [col["name"] for col in conn.columns]
@@ -124,7 +123,5 @@ def extract(bucket: str, s3_client=None):
 
     finally:
         if conn:
-            # print to check if patched or real connection used
-            print(s3_client, "s3_client that was used")
             conn.close()
             log_message(__name__, 20, "DB connection closed")

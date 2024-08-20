@@ -20,7 +20,6 @@ class TestTransform:
             )["Contents"]
         )
         result = [bucket["Key"] for bucket in result_list_processed_data_bucket]
-        print(result)
 
         expected = [
             "dim_staff.parquet",

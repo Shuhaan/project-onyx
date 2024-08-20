@@ -106,10 +106,12 @@ def transform(source_bucket: str, files: list, output_bucket: str):
 
         else:
             output_file = ""
-            print(f"Unknown table encountered: {table}, skipping...")
+            log_message(
+                __name__, 20, f"Unknown table encountered: {table}, skipping..."
+            )
 
         # Save and upload the processed file
         if output_file:
             df.to_parquet(output_file)
             s3_client.upload_file(output_file, output_bucket, output_file)
-            print(f"Uploaded {output_file} to {output_bucket}")
+            log_message(__name__, 20, f"Uploaded {output_file} to {output_bucket}")
