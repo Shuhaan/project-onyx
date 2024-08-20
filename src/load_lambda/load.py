@@ -30,6 +30,8 @@ def load(client=None):
         
         # read new parquets from s3 one at a time in loop
         
+        
+        
         # convert parquet to df
 
         # extract columns and data from df
@@ -40,8 +42,10 @@ def load(client=None):
         columns = (', ').join(list(df.columns))
         values_lst = df.values.tolist()
         
+        df.to_sql(table_name, conn, if_exists="append", index=False)
+        
         query = f"""
-                    INSERT INTO {table_name} ({column}) VALUES ({values})
+                INSERT INTO {table_name} ({column}) VALUES ({values});
                     
         """
                 
