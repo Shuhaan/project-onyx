@@ -63,13 +63,14 @@ def read_parquet_from_s3(bucket_name, s3_client):
             Bucket="onyx-processed-data-bucket"
         )["Contents"]
     bucket_files = [file_data["Key"] for file_data in bucket_contents]
-        
+    list_of_parquets = []
     for file in bucket_files:    
-        s3_client.get_object(Bucket=bucket_name, Key=file)
-    pass
+        list_of_parquets.append(s3_client.get_object(Bucket=bucket_name, Key=file))
+    return list_of_parquets
 
 
-def write_df_to_warehouse():
+def write_df_to_warehouse(parquet_file):
+    
     df = pd.read_parquet("dim_currency.parquet")
     table_name = "test_table"
     engine = create_engine('postgresql+pg8000://postgres:password@localhost:5432/load_test')
