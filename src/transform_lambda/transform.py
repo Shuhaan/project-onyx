@@ -53,14 +53,17 @@ def transform(source_bucket: str, file: str, output_bucket: str):
     log_message(__name__, 20, "Transform started")
 
     s3_client = boto3.client("s3")
+
     output_bucket_contents = get_bucket_contents(output_bucket)
+    date = datetime.now()
+    date_str = date.strftime("%Y/%m/%d/%H-%M")
 
     # Create the dim_date parquet if it does not exist
-    if "dim_date.dim_date.parquet" not in output_bucket_contents:
+    if "dim_date" not in output_bucket_contents:
         dim_date_df = create_dim_date("1970-01-01", "2030-12-31")
-        dim_date_df.to_parquet("dim_date.parquet")
+        dim_date_df.to_parquet("/tmp/dim_date.parquet")
         s3_client.upload_file(
-            "dim_date.parquet", output_bucket, "dim_date.dim_date.parquet"
+            "/tmp/dim_date.parquet", output_bucket, f"dim_date/{date_str}.parquet"
         )
 
     table = file.split("/")[0]
@@ -71,11 +74,11 @@ def transform(source_bucket: str, file: str, output_bucket: str):
         df = df.rename(columns={"address_id": "location_id"}).drop(
             ["created_at", "last_updated"], axis=1
         )
-        output_file = "dim_location.parquet"
+        output_file = "/tmp/dim_location.parquet"
 
     elif table == "design":
         df = df.drop(["created_at", "last_updated"], axis=1)
-        output_file = "dim_design.parquet"
+        output_file = "/tmp/dim_design.parquet"
 
     elif table == "currency":
         # Define the mapping of currency codes to currency names
@@ -90,7 +93,7 @@ def transform(source_bucket: str, file: str, output_bucket: str):
         df = df.drop(["created_at", "last_updated"], axis=1).assign(
             currency_name=df["currency_code"].map(currency_mapping)
         )
-        output_file = "dim_currency.parquet"
+        output_file = "/tmp/dim_currency.parquet"
 
     elif table == "counterparty":  # combine counterparty with address table
         df = df.drop(
@@ -102,7 +105,7 @@ def transform(source_bucket: str, file: str, output_bucket: str):
             ],
             axis=1,
         )
-        output_file = "dim_counterparty.parquet"
+        output_file = "/tmp/dim_counterparty.parquet"
 
     else:
         output_file = ""
@@ -110,10 +113,7 @@ def transform(source_bucket: str, file: str, output_bucket: str):
 
     # Save and upload the processed file
     if output_file.endswith(".parquet"):
-        df.to_parquet(output_file, engine="pyarrow")
-
-        date = datetime.now()
-        date_str = date.strftime("%Y/%m/%d/%H-%M")
+        df.to_parquet(output_file)
         s3_key = f"{output_file}/{date_str}.parquet"
 
         s3_client.upload_file(output_file, output_bucket, s3_key)
