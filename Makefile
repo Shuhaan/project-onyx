@@ -116,7 +116,7 @@ terraform-destroy:
 
 ## Clean up environment
 clean:
-	rm -rf venv *.parquet layers .pytest_cache .coverage
+	rm -rf venv *.parquet */*/layer .pytest_cache .coverage
 	find . -type f -name '*.pyc' -delete
 	find . -type d -name '__pycache__' -delete
 	find . -type f -name '*.txt' -delete
