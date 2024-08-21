@@ -1,6 +1,7 @@
 import boto3, logging
 from botocore.exceptions import ClientError
 from typing import Any
+from datetime import datetime
 from transform_utils import (
     get_bucket_contents,
     log_message,
@@ -109,8 +110,13 @@ def transform(source_bucket: str, file: str, output_bucket: str):
 
     # Save and upload the processed file
     if output_file.endswith(".parquet"):
-        df.to_parquet(output_file)
-        s3_client.upload_file(output_file, output_bucket, output_file)
+        df.to_parquet(output_file, engine="pyarrow")
+
+        date = datetime.now()
+        date_str = date.strftime("%Y/%m/%d/%H-%M")
+        s3_key = f"{output_file}/{date_str}.parquet"
+
+        s3_client.upload_file(output_file, output_bucket, s3_key)
         log_message(__name__, 20, f"Uploaded {output_file} to {output_bucket}")
 
 

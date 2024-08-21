@@ -110,8 +110,12 @@ def get_bucket_contents(bucket_name, s3_client=None):
     if not s3_client:
         s3_client = boto3.client("s3")
     response = s3_client.list_objects(Bucket=bucket_name)
-    bucket_content_list = [ele["Key"] for ele in response["Contents"]]
-    return bucket_content_list
+    
+    if "Contents" in response:
+        bucket_content_list = [ele["Key"] for ele in response["Contents"]]
+        return bucket_content_list
+    else:
+        return []
 
 
 # bucket_name="onyx-totesys-ingested-data-bucket"
