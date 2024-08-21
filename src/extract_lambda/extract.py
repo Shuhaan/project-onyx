@@ -69,16 +69,16 @@ def extract(bucket: str, s3_client=None):
             log_message(__name__, 20, "Extract function running for the first time")
 
         totesys_table_list = [
+            "purchase_order",
+            "payment",
+            "currency",
             "address",
             "design",
             "transaction",
             "sales_order",
             "counterparty",
-            "payment",
             "staff",
-            "purchase_order",
             "payment_type",
-            "currency",
             "department",
         ]
         for table in totesys_table_list:
