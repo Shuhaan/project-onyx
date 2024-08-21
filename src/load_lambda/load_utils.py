@@ -2,12 +2,12 @@ import pandas as pd
 import boto3, logging, json, os
 from dotenv import load_dotenv
 from botocore.exceptions import ClientError
-from typing import List, Dict, Any
+#! from typing import List, Dict, Any
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from io import BytesIO
 from datetime import datetime
-from decimal import Decimal
+#! from decimal import Decimal
 
 load_dotenv()
 
@@ -29,6 +29,9 @@ def get_secret(
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)
         secret_dict = get_secret_value_response["SecretString"]
         secret = json.loads(secret_dict)
+
+        #! secret['engine'] > secret['HOST']
+
         result = f"postgresql+pg8000://{secret['username']}:{secret['password']}@{secret['engine']}:{secret['port']}/{secret['dbname']}"
         return result
 
@@ -73,7 +76,10 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
     fact_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
                         if not '.txt' in obj['Key'] and "fact_" in obj['Key']]
     last_mod = bucket_contents[0]['LastModified']
+    print(last_mod)
     last_load = datetime.strptime(last_load,"%Y-%m-%d %H:%M:%S%z")
+    print(last_load)
+    print(last_load and last_load < last_mod)
     if last_load and last_load < last_mod:
         dim_parquet_files_list = [file_data["Key"] for file_data in bucket_contents
                                   if not '.txt' in file_data['Key'] and "dim_" in file_data['Key']]
@@ -94,7 +100,7 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
         return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
             
 
-def write_df_to_warehouse(read_parquet, engine_string=None):
+def write_df_to_warehouse(read_parquet, engine_string):
     if not engine_string:
         engine_string = get_secret()
     dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
@@ -109,6 +115,3 @@ def write_df_to_warehouse(read_parquet, engine_string=None):
                                 if_exists='append', index=False)
     except SQLAlchemyError as e:
         log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
-            
-
-

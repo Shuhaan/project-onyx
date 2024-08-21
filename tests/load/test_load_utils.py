@@ -2,7 +2,7 @@
 import pytest, os
 from load_utils import read_parquets_from_s3, write_df_to_warehouse, get_secret
 import pandas as pd
-from datetime import datetime, tzinfo
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,18 +28,22 @@ class TestWriteToWarehouse:
     
     def test_function_writes_to_warehouse(self,s3_client, util_populate_mock_s3, \
                                           util_connect_to_mock_warehouse):
+        # date = datetime.now(timezone.utc)
+        # store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
+        # print(store_last_load)
+        # s3_client.put_object(
+        #     Bucket="test-processed-bucket", Key="last_load.txt", Body=store_last_load
+        # )
+        # last_load_file = s3_client.get_object(
+        #     Bucket="test-processed-bucket", Key="last_load.txt"
+        # )
+        # last_load = last_load_file["Body"].read().decode("utf-8")
+        # print(last_load)
+        last_load = "2024-08-21 23:10:51+0000"
         read_parquet = read_parquets_from_s3(s3_client, 
-                                             "2024-08-21 10:51:05+00:00", 
+                                             last_load, 
                                              "test-processed-bucket")
-        # bucket_contents = s3_client.list_objects(Bucket="test-processed-bucket")["Contents"]
-        # last_mod = bucket_contents[0]['LastModified']
-        # now=None
-        # print(now > last_mod,\
-        #     "<<<<<< compare with now")
-        # read_parquet = read_parquets_from_s3(s3_client, 
-        #                                      f"{now}+00:00", 
-        #                                      "test-processed-bucket")
-        write_df_to_warehouse(read_parquet, os.getenv("TEST-ENGINE"))
+        write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE"))
         
         query = "SELECT * FROM dim_counterparty LIMIT 2;"
         response = util_connect_to_mock_warehouse.run(query)

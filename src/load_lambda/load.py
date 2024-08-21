@@ -1,7 +1,7 @@
 import boto3, os
 import pandas as pd
 from botocore.exceptions import ClientError
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from load_utils import log_message, read_parquet_from_s3, \
     write_df_to_warehouse, get_secret
@@ -39,10 +39,8 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
         log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
         
     # create new/update last_load timestamp and put into processed data bucket
-    date = datetime.now()
-    store_last_load = date.strftime("%Y-%m-%d %H:%M:%S")
+    date = datetime.now(timezone.utc)
+    store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
     s3_client.put_object(
         Bucket=bucket, Key="last_load.txt", Body=store_last_load
     )
-     
-    
