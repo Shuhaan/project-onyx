@@ -71,8 +71,9 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
     fact_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
                         if not '.txt' in obj['Key'] and "fact_" in obj['Key']]
     last_mod = bucket_contents[0]['LastModified']
+    print(bucket_contents[0])
     last_load = datetime.strptime(last_load,"%Y-%m-%d %H:%M:%S%z")
-    if last_load < last_mod:
+    if last_load and last_load < last_mod:
         dim_parquet_files_list = [file_data["Key"] for file_data in bucket_contents
                                   if not '.txt' in file_data['Key'] and "dim_" in file_data['Key']]
         fact_parquet_files_list = [file_data["Key"] for file_data in bucket_contents
@@ -92,10 +93,10 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
         return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
             
 
-def write_df_to_warehouse(read_parquet, db_name):
+def write_df_to_warehouse(read_parquet, engine_string=os.getenv("LOAD-ENGINE")):
     dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
-    # get db credentials from secrets
-    engine = create_engine(f'postgresql+pg8000://{os.getenv("TEST-USER")}:{os.getenv("TEST-PASSWORD")}@localhost:5432/{db_name}')
+    # get db credentials from secrets as engine string
+    engine = create_engine(engine_string)
     for i in range(len(dim_df_list)):
         dim_df_list[i].to_sql(dim_table_names[i], engine, if_exists='append', index=False)   
     for i in range(len(fact_df_list)):

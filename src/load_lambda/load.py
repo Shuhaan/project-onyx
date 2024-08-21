@@ -2,8 +2,12 @@ import boto3, os
 import pandas as pd
 from botocore.exceptions import ClientError
 from datetime import datetime
-from load_utils import log_message, read_parquet_from_s3, write_df_to_warehouse
+from dotenv import load_dotenv
+from load_utils import log_message, read_parquet_from_s3, \
+    write_df_to_warehouse, get_secret
 
+
+load_dotenv()
 
 def load(bucket="onyx-processed-data-bucket", s3_client=None):
     log_message(__name__, 10, "Entered load function")
@@ -18,14 +22,13 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
         last_load = last_load_file["Body"].read().decode("utf-8")
         log_message(__name__, 20, f"Load function last ran at {last_load}")
     except s3_client.exceptions.NoSuchKey:
-        lastload = None
+        last_load = None
         log_message(__name__, 20, "Load function running for the first time")
 
     # check for new parquet files since last upload. Need to figure out this logic
     
-    
-    read_parquet = read_parquet_from_s3(s3_client, bucket)
-    write_df_to_warehouse(read_parquet, db_name)
+    read_parquet = read_parquet_from_s3(s3_client, last_load, bucket)
+    write_df_to_warehouse(read_parquet)
     
     
     date = datetime.now()
