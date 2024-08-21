@@ -2,14 +2,15 @@ import boto3, os
 import pandas as pd
 from botocore.exceptions import ClientError
 from datetime import datetime
-from load_utils import log_message
+from load_utils import log_message, read_parquet_from_s3, write_df_to_warehouse
 
 
 def load(bucket: str, s3_client=None):
     log_message(__name__, 10, "Entered load function")
     if not s3_client:
         s3_client = boto3.client("s3")
-        
+    
+    # this try and accept checks for last load time-stamp
     try:
         last_load_file = s3_client.get_object(
             Bucket=bucket, Key="last_load.txt"
@@ -20,9 +21,11 @@ def load(bucket: str, s3_client=None):
         lastload = None
         log_message(__name__, 20, "Load function running for the first time")
 
-    # check for new parquet files since last upload
+    # check for new parquet files since last upload. Need to figure out this logic
     
-    # read new parquets from s3 one at a time in loop
+    
+    
+    
     
     date = datetime.now()
     store_last_load = date.strftime("%Y-%m-%d %H:%M:%S")

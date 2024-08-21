@@ -3,6 +3,7 @@ import boto3, logging, json
 from botocore.exceptions import ClientError
 from typing import List, Dict, Any
 from sqlalchemy import create_engine
+from io import BytesIO
 
 def get_secret(
     secret_name: str = "STILL TO BE WRITTEN", region_name: str = "eu-west-2"
@@ -58,23 +59,41 @@ def log_message(name: str, level: int, message: str = ""):
         logger.error("Invalid log level: %d", level)
 
 
-def read_parquet_from_s3(bucket_name, s3_client):
-    bucket_contents = s3_client.list_objects(
-            Bucket="onyx-processed-data-bucket"
-        )["Contents"]
-    bucket_files = [file_data["Key"] for file_data in bucket_contents]
-    list_of_parquets = []
-    for file in bucket_files:    
-        list_of_parquets.append(s3_client.get_object(Bucket=bucket_name, Key=file))
-    return list_of_parquets
-
-
-def write_df_to_warehouse(parquet_file):
+def read_parquets_from_s3(s3_client, bucket="onyx-processed-data-bucket"):
+    bucket_contents = s3_client.list_objects(Bucket=bucket)["Contents"]
+    # print(bucket_contents[0]['Key'],'<<< file 1')
+    table_name = bucket_contents[0]['Key'].split('.')[0]
+    # print(bucket_contents[0]['LastModified'],'<<< last modified 1')
+    # print(bucket_contents[0])
+    # print(table_name)
+    # time stamp logic ^^^^ can be added to list comprehnsion for filtering
+    parquet_files_list = [file_data["Key"] for file_data in bucket_contents]
+    # print(parquet_files_list)
     
-    df = pd.read_parquet("dim_currency.parquet")
-    table_name = "test_table"
-    engine = create_engine('postgresql+pg8000://postgres:password@localhost:5432/load_test')
-    df.to_sql(table_name, engine, if_exists='replace', index=False)
+    df_list = []
+    for parquet_file_name in parquet_files_list:   
+        response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
+        data = response['Body'].read()
+        
+        df = pd.read_parquet(BytesIO(data))
+        df_list.append(df)
+    # print(list_of_dfs)
+    read_parquet = [table_name, df_list]
+    return read_parquet
 
 
-write_df_to_warehouse()
+
+def write_df_to_warehouse(read_parquet, db_name):
+    table_name = read_parquet[0]
+    df_list = read_parquet[1]
+    # print(table_name)
+    # print(df_list)
+    # for df in df_list:
+        
+    #     # db credentials need to be updated with AWS secrets
+    #     engine = create_engine(f'postgresql+pg8000://postgres:password@localhost:5432/{db_name}')
+    #     df.to_sql(table_name, engine, if_exists='append', index=False)
+    print(table_name)
+    return table_name
+
+
