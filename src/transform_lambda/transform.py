@@ -2,6 +2,7 @@ import boto3, logging
 from botocore.exceptions import ClientError
 from typing import Any
 from datetime import datetime
+import pandas as pd
 from transform_utils import (
     get_bucket_contents,
     log_message,
@@ -74,11 +75,11 @@ def transform(source_bucket: str, file: str, output_bucket: str):
         df = df.rename(columns={"address_id": "location_id"}).drop(
             ["created_at", "last_updated"], axis=1
         )
-        output_file = "/tmp/dim_location.parquet"
+        output_table = "dim_location"
 
     elif table == "design":
         df = df.drop(["created_at", "last_updated"], axis=1)
-        output_file = "/tmp/dim_design.parquet"
+        output_table = "dim_design"
 
     elif table == "currency":
         # Define the mapping of currency codes to currency names
@@ -93,31 +94,42 @@ def transform(source_bucket: str, file: str, output_bucket: str):
         df = df.drop(["created_at", "last_updated"], axis=1).assign(
             currency_name=df["currency_code"].map(currency_mapping)
         )
-        output_file = "/tmp/dim_currency.parquet"
+        output_table = "dim_currency"
 
-    elif table == "counterparty":  # combine counterparty with address table
-        df = df.drop(
-            [
-                "commercial_contact",
-                "delivery_contact",
-                "created_at",
-                "last_updated",
-            ],
-            axis=1,
-        )
-        output_file = "/tmp/dim_counterparty.parquet"
+    # elif table == "counterparty":  # combine counterparty with address table
+    #     dim_counterparty_df = df.drop(
+    #         [
+    #             "commercial_contact",
+    #             "delivery_contact",
+    #             "created_at",
+    #             "last_updated",
+    #         ],
+    #         axis=1,
+    #     )
+    #     output_bucket_contents = get_bucket_contents(output_bucket)
+    #     dim_location_files=[file for file in output_bucket_contents if file.startswith("dim_location")]
+    #     sorted_dim_location_files=sorted(dim_location_files)
+    #     print(sorted_dim_location_files)
+    #     dim_location_dfs=[]
+    #     for file in sorted_dim_location_files:
+    #         dim_location_df = pd.read_parquet(file)
+    #         dim_location_dfs.append(dim_location_df)
+    #     combined_dim_location_df = pd.concat(dim_location_dfs, ignore_index=True)
+    #     combined_dim_location_df.drop_duplicates(keep='last', inplace=True)
+
+    #     output_table = "dim_counterparty"
 
     else:
-        output_file = ""
+        output_table = ""
         log_message(__name__, 20, f"Unknown table encountered: {table}, skipping...")
 
     # Save and upload the processed file
-    if output_file.endswith(".parquet"):
-        df.to_parquet(output_file)
-        s3_key = f"{output_file}/{date_str}.parquet"
-
-        s3_client.upload_file(output_file, output_bucket, s3_key)
-        log_message(__name__, 20, f"Uploaded {output_file} to {output_bucket}")
+    if output_table:
+        s3_key = f"{output_table}/{date_str}.parquet"
+        df.to_parquet(f"/tmp/{output_table}.parquet")
+        
+        s3_client.upload_file(f"/tmp/{output_table}.parquet", output_bucket, s3_key)
+        log_message(__name__, 20, f"Uploaded {output_table} to {output_bucket}")
 
 
 # "address",
