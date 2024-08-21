@@ -39,14 +39,14 @@ def lambda_handler(event: dict, context: Any):
     transform(source_bucket, new_file, "onyx-processed-data-bucket")
 
 
-def transform(source_bucket: str, files: list, output_bucket: str):
+def transform(source_bucket: str, file: str, output_bucket: str):
     """
     Transforms JSON files from S3 and uploads the processed files back to S3,
     including generating dim_date separately.
 
     Args:
         source_bucket (str): The name of the S3 bucket containing the source JSON files.
-        files (List[str]): List of file paths (keys) within the source bucket.
+        file (str): str of file path (key) within the source bucket.
         output_bucket (str): The name of the S3 bucket to upload processed files to.
     """
     log_message(__name__, 20, "Transform started")
@@ -62,55 +62,66 @@ def transform(source_bucket: str, files: list, output_bucket: str):
             "dim_date.parquet", output_bucket, "dim_date.dim_date.parquet"
         )
 
-    for file in files:
-        table = file.split("/")[0]
-        df = create_df_from_json_in_bucket(source_bucket, file)
+    table = file.split("/")[0]
+    df = create_df_from_json_in_bucket(source_bucket, file)
 
-        # Table-specific processing
-        if table == "address":
-            df = df.rename(columns={"address_id": "location_id"}).drop(
-                ["created_at", "last_updated"], axis=1
-            )
-            output_file = "dim_location.parquet"
+    # Table-specific processing
+    if table == "address":
+        df = df.rename(columns={"address_id": "location_id"}).drop(
+            ["created_at", "last_updated"], axis=1
+        )
+        output_file = "dim_location.parquet"
 
-        elif table == "design":
-            df = df.drop(["created_at", "last_updated"], axis=1)
-            output_file = "dim_design.parquet"
+    elif table == "design":
+        df = df.drop(["created_at", "last_updated"], axis=1)
+        output_file = "dim_design.parquet"
 
-        elif table == "currency":
-            # Define the mapping of currency codes to currency names
-            currency_mapping = {
-                "GBP": "British Pound Sterling",
-                "USD": "United States Dollar",
-                "EUR": "Euros",
-            }
+    elif table == "currency":
+        # Define the mapping of currency codes to currency names
+        currency_mapping = {
+            "GBP": "British Pound Sterling",
+            "USD": "United States Dollar",
+            "EUR": "Euros",
+        }
+        # to do - include error handling code for currencies not in above dict
 
-            # Drop the columns and add the new currency_name column based on the currency_code
-            df = df.drop(["created_at", "last_updated"], axis=1).assign(
-                currency_name=df["currency_code"].map(currency_mapping)
-            )
-            output_file = "dim_currency.parquet"
+        # Drop the columns and add the new currency_name column based on the currency_code
+        df = df.drop(["created_at", "last_updated"], axis=1).assign(
+            currency_name=df["currency_code"].map(currency_mapping)
+        )
+        output_file = "dim_currency.parquet"
 
-        elif table == "counterparty":  # combine counterparty with address table
-            df = df.drop(
-                [
-                    "commercial_contact",
-                    "delivery_contact",
-                    "created_at",
-                    "last_updated",
-                ],
-                axis=1,
-            )
-            output_file = "dim_counterparty.parquet"
+    elif table == "counterparty":  # combine counterparty with address table
+        df = df.drop(
+            [
+                "commercial_contact",
+                "delivery_contact",
+                "created_at",
+                "last_updated",
+            ],
+            axis=1,
+        )
+        output_file = "dim_counterparty.parquet"
 
-        else:
-            output_file = ""
-            log_message(
-                __name__, 20, f"Unknown table encountered: {table}, skipping..."
-            )
+    else:
+        output_file = ""
+        log_message(__name__, 20, f"Unknown table encountered: {table}, skipping...")
 
-        # Save and upload the processed file
-        if output_file.endswith(".parquet"):
-            df.to_parquet(output_file)
-            s3_client.upload_file(output_file, output_bucket, output_file)
-            log_message(__name__, 20, f"Uploaded {output_file} to {output_bucket}")
+    # Save and upload the processed file
+    if output_file.endswith(".parquet"):
+        df.to_parquet(output_file)
+        s3_client.upload_file(output_file, output_bucket, output_file)
+        log_message(__name__, 20, f"Uploaded {output_file} to {output_bucket}")
+
+
+# "address",
+# "design",
+# "transaction",
+# "sales_order",
+# "counterparty",
+# "payment",
+# "staff",
+# "purchase_order",
+# "payment_type",
+# "currency",
+# "department"
