@@ -30,7 +30,6 @@ class TestWriteToWarehouse:
         write_df_to_warehouse(read_parquet, 'load_test')
         
         query = "SELECT * FROM dim_counterparty LIMIT 2;"
-        # columns = [col["name"] for col in conn.columns]
         response = util_connect_to_mock_warehouse.run(query)
         print(response)
         assert response == [
