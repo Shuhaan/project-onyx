@@ -62,16 +62,17 @@ def log_message(name: str, level: int, message: str = ""):
 
 def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-bucket"):
     bucket_contents = s3_client.list_objects(Bucket=bucket)["Contents"]
-    dim_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents if not '.txt' in obj['Key'] and "dim_" in obj['Key']]
-    fact_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents if not '.txt' in obj['Key'] and "fact_" in obj['Key']]
+    dim_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
+                       if not '.txt' in obj['Key'] and "dim_" in obj['Key']]
+    fact_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
+                        if not '.txt' in obj['Key'] and "fact_" in obj['Key']]
     last_mod = bucket_contents[0]['LastModified']
     last_load = datetime.strptime(last_load,"%Y-%m-%d %H:%M:%S%z")
-    print(last_load,'<<< last load ')
-    print(last_mod,'<<< last modified ')
-    if last_load > last_mod:
-    # time stamp logic ^^^^ can be added to list comprehnsion for filtering
-        dim_parquet_files_list = [file_data["Key"] for file_data in bucket_contents if not '.txt' in file_data['Key'] and "dim_" in file_data['Key']]
-        fact_parquet_files_list = [file_data["Key"] for file_data in bucket_contents if not '.txt' in file_data['Key'] and "fact_" in file_data['Key']]
+    if last_load < last_mod:
+        dim_parquet_files_list = [file_data["Key"] for file_data in bucket_contents
+                                  if not '.txt' in file_data['Key'] and "dim_" in file_data['Key']]
+        fact_parquet_files_list = [file_data["Key"] for file_data in bucket_contents
+                                   if not '.txt' in file_data['Key'] and "fact_" in file_data['Key']]
         dim_df_list = []
         for parquet_file_name in dim_parquet_files_list:   
             response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
@@ -91,14 +92,11 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
 
 def write_df_to_warehouse(read_parquet, db_name):
     dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
-    
+    # get db credentials from secrets
     for i in range(len(dim_df_list)):
-        # db credentials need to be updated with AWS secrets
         engine = create_engine(f'postgresql+pg8000://postgres:postgres123@localhost:5432/{db_name}')
-        dim_df_list[i].to_sql(dim_table_names[i], engine, if_exists='replace', index=False)
-        
+        dim_df_list[i].to_sql(dim_table_names[i], engine, if_exists='replace', index=False)   
     for i in range(len(fact_df_list)):
-        # db credentials need to be updated with AWS secrets
         engine = create_engine(f'postgresql+pg8000://postgres:postgres123@localhost:5432/{db_name}')
         fact_df_list[i].to_sql(fact_table_names[i], engine, if_exists='replace', index=False)    
     return dim_table_names

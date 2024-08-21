@@ -11,3 +11,19 @@ def db_credentials_fail(
 ):
     return (user, password, database, host, port)
 
+
+@pytest.fixture()
+def util_populate_mock_s3(s3_data_buckets):
+        test_parquet1 = "tests/load/dim_counterparty.parquet"
+        test_parquet2 = "tests/load/dim_currency.parquet"
+        test_parquet3 = "tests/load/fact_design.parquet"
+        test_time_stamp = "tests/load/time_stamp.txt"
+        s3_data_buckets.upload_file(test_parquet3,
+                              "test-processed-bucket", "fact_design.parquet")
+        s3_data_buckets.upload_file(test_parquet1,
+                              "test-processed-bucket", "dim_counterparty.parquet")
+        s3_data_buckets.upload_file(test_parquet2,
+                              "test-processed-bucket", "dim_currency.parquet")
+        
+        s3_data_buckets.upload_file(test_time_stamp, "test-processed-bucket", "time_stamp.txt")
+        
