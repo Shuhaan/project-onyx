@@ -10,3 +10,4 @@ pytest-cov
 pandas
 fastparquet
 parquet-tools
+sqlalchemy

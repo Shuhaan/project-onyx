@@ -1,10 +1,14 @@
 import pandas as pd
-import boto3, logging, json
+import boto3, logging, json, os
+from dotenv import load_dotenv
 from botocore.exceptions import ClientError
 from typing import List, Dict, Any
 from sqlalchemy import create_engine
 from io import BytesIO
 from datetime import datetime
+from decimal import Decimal
+
+load_dotenv()
 
 def get_secret(
     secret_name: str = "STILL TO BE WRITTEN", region_name: str = "eu-west-2"
@@ -88,17 +92,50 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
         return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
             
 
-
-
 def write_df_to_warehouse(read_parquet, db_name):
     dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
     # get db credentials from secrets
+    engine = create_engine(f'postgresql+pg8000://{os.getenv("TEST-USER")}:{os.getenv("TEST-PASSWORD")}@localhost:5432/{db_name}')
     for i in range(len(dim_df_list)):
-        engine = create_engine(f'postgresql+pg8000://postgres:postgres123@localhost:5432/{db_name}')
-        dim_df_list[i].to_sql(dim_table_names[i], engine, if_exists='replace', index=False)   
+        dim_df_list[i].to_sql(dim_table_names[i], engine, if_exists='append', index=False)   
     for i in range(len(fact_df_list)):
-        engine = create_engine(f'postgresql+pg8000://postgres:postgres123@localhost:5432/{db_name}')
-        fact_df_list[i].to_sql(fact_table_names[i], engine, if_exists='replace', index=False)    
-    return dim_table_names
+        fact_df_list[i].to_sql(fact_table_names[i], engine, if_exists='append', index=False)    
+    # return dim_table_names
+
+def format_response(
+    columns: List[str], response: List[List[Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Formats a response into a list of dictionaries with columns as keys.
+
+    Validates that each row in the response has the same number of elements as the columns.
+
+    :param columns: A list of column names.
+    :param response: A list of rows, where each row is a list of values.
+    :return: A list of dictionaries where each dictionary represents a row.
+    :raises ValueError: If any row in the response has a different number of elements than the columns.
+    """
+    log_message(__name__, 10, "Entered format_response")
+
+    formatted_response = []
+    num_columns = len(columns)
+
+    for row in response:
+        if len(row) != num_columns:
+            raise ValueError("Mismatch between number of columns and row length")
+
+        extracted_from_response = {}
+
+        for column, value in zip(columns, row):
+            if isinstance(value, datetime):
+                value = value.strftime("%Y-%m-%d %H:%M:%S")
+            elif isinstance(value, Decimal):
+                value = float(value)
+
+            extracted_from_response[column] = value
+
+        formatted_response.append(extracted_from_response)
+
+    return formatted_response
 
 

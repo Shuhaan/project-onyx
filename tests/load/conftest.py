@@ -1,9 +1,12 @@
-import pytest, boto3, json
+import pytest, boto3, json, os
+from dotenv import load_dotenv
+from pg8000.native import Connection
 from pg8000.exceptions import DatabaseError
 from moto import mock_aws
 from unittest.mock import patch
 from load_utils import log_message
 
+load_dotenv()
 
 @pytest.fixture()
 def db_credentials_fail(
@@ -26,4 +29,14 @@ def util_populate_mock_s3(s3_data_buckets):
                               "test-processed-bucket", "dim_currency.parquet")
         
         s3_data_buckets.upload_file(test_time_stamp, "test-processed-bucket", "time_stamp.txt")
-        
+
+
+@pytest.fixture()
+def util_connect_to_mock_warehouse():
+      return Connection(
+            user=os.getenv("TEST-USER"),
+            password=os.getenv("TEST-PASSWORD"),
+            database=os.getenv("TEST-DATABASE"),
+            # host=credentials["HOST"],
+            port=5432,
+        )
