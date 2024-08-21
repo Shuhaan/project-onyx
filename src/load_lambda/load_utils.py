@@ -4,6 +4,7 @@ from botocore.exceptions import ClientError
 from typing import List, Dict, Any
 from sqlalchemy import create_engine
 from io import BytesIO
+from datetime import datetime
 
 def get_secret(
     secret_name: str = "STILL TO BE WRITTEN", region_name: str = "eu-west-2"
@@ -59,41 +60,47 @@ def log_message(name: str, level: int, message: str = ""):
         logger.error("Invalid log level: %d", level)
 
 
-def read_parquets_from_s3(s3_client, bucket="onyx-processed-data-bucket"):
+def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-bucket"):
     bucket_contents = s3_client.list_objects(Bucket=bucket)["Contents"]
-    # print(bucket_contents[0]['Key'],'<<< file 1')
-    table_name = bucket_contents[0]['Key'].split('.')[0]
-    # print(bucket_contents[0]['LastModified'],'<<< last modified 1')
-    # print(bucket_contents[0])
-    # print(table_name)
+    dim_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents if not '.txt' in obj['Key'] and "dim_" in obj['Key']]
+    fact_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents if not '.txt' in obj['Key'] and "fact_" in obj['Key']]
+    last_mod = bucket_contents[0]['LastModified']
+    last_load = datetime.strptime(last_load,"%Y-%m-%d %H:%M:%S%z")
+    print(last_load,'<<< last load ')
+    print(last_mod,'<<< last modified ')
+    if last_load > last_mod:
     # time stamp logic ^^^^ can be added to list comprehnsion for filtering
-    parquet_files_list = [file_data["Key"] for file_data in bucket_contents]
-    # print(parquet_files_list)
-    
-    df_list = []
-    for parquet_file_name in parquet_files_list:   
-        response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
-        data = response['Body'].read()
-        
-        df = pd.read_parquet(BytesIO(data))
-        df_list.append(df)
-    # print(list_of_dfs)
-    read_parquet = [table_name, df_list]
-    return read_parquet
+        dim_parquet_files_list = [file_data["Key"] for file_data in bucket_contents if not '.txt' in file_data['Key'] and "dim_" in file_data['Key']]
+        fact_parquet_files_list = [file_data["Key"] for file_data in bucket_contents if not '.txt' in file_data['Key'] and "fact_" in file_data['Key']]
+        dim_df_list = []
+        for parquet_file_name in dim_parquet_files_list:   
+            response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
+            data = response['Body'].read()
+            df = pd.read_parquet(BytesIO(data))
+            dim_df_list.append(df)
+        fact_df_list = []
+        for parquet_file_name in fact_parquet_files_list:   
+            response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
+            data = response['Body'].read()
+            df = pd.read_parquet(BytesIO(data))
+            fact_df_list.append(df)
+        return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
+            
 
 
 
 def write_df_to_warehouse(read_parquet, db_name):
-    table_name = read_parquet[0]
-    df_list = read_parquet[1]
-    # print(table_name)
-    # print(df_list)
-    # for df in df_list:
+    dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
+    
+    for i in range(len(dim_df_list)):
+        # db credentials need to be updated with AWS secrets
+        engine = create_engine(f'postgresql+pg8000://postgres:postgres123@localhost:5432/{db_name}')
+        dim_df_list[i].to_sql(dim_table_names[i], engine, if_exists='replace', index=False)
         
-    #     # db credentials need to be updated with AWS secrets
-    #     engine = create_engine(f'postgresql+pg8000://postgres:password@localhost:5432/{db_name}')
-    #     df.to_sql(table_name, engine, if_exists='append', index=False)
-    print(table_name)
-    return table_name
+    for i in range(len(fact_df_list)):
+        # db credentials need to be updated with AWS secrets
+        engine = create_engine(f'postgresql+pg8000://postgres:postgres123@localhost:5432/{db_name}')
+        fact_df_list[i].to_sql(fact_table_names[i], engine, if_exists='replace', index=False)    
+    return dim_table_names
 
 

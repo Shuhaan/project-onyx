@@ -5,7 +5,7 @@ from datetime import datetime
 from load_utils import log_message, read_parquet_from_s3, write_df_to_warehouse
 
 
-def load(bucket: str, s3_client=None):
+def load(bucket="onyx-processed-data-bucket", s3_client=None):
     log_message(__name__, 10, "Entered load function")
     if not s3_client:
         s3_client = boto3.client("s3")
@@ -24,7 +24,8 @@ def load(bucket: str, s3_client=None):
     # check for new parquet files since last upload. Need to figure out this logic
     
     
-    
+    read_parquet = read_parquet_from_s3(s3_client, bucket)
+    write_df_to_warehouse(read_parquet, db_name)
     
     
     date = datetime.now()
