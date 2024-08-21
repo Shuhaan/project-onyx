@@ -3,7 +3,7 @@ from transform import transform
 
 
 class TestTransform:
-    @pytest.mark.xfail
+    # @pytest.mark.xfail
     def test_transform_puts_files_in_processed_data_bucket(
         self, write_files_to_ingested_data_bucket
     ):
@@ -12,7 +12,8 @@ class TestTransform:
         )["Contents"]
         new_files = [bucket["Key"] for bucket in ingested_data_files]
 
-        transform("test-ingested-bucket", new_files, "test-processed-bucket")
+        for new_file in new_files:
+            transform("test-ingested-bucket", new_file, "test-processed-bucket")
 
         result_list_processed_data_bucket = (
             write_files_to_ingested_data_bucket.list_objects(
@@ -20,6 +21,7 @@ class TestTransform:
             )["Contents"]
         )
         result = [bucket["Key"] for bucket in result_list_processed_data_bucket]
+        print("HELLLOOOOOO", result)
 
         expected = [
             "dim_staff.parquet",
