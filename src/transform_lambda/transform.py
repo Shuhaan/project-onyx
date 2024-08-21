@@ -33,8 +33,8 @@ def lambda_handler(event: dict, context: Any):
     :param context: The runtime information of the Lambda function (e.g., function name, version).
     """
     log_message(__name__, 10, "Entered transform_lambda_handler")
-    source_bucket = event["records"][0]["s3"]["bucket"]["name"]
-    new_file = event["records"][0]["s3"]["object"]["key"]
+    source_bucket = event["Records"][0]["s3"]["bucket"]["name"]
+    new_file = event["Records"][0]["s3"]["object"]["key"]
 
     transform(source_bucket, new_file, "onyx-processed-data-bucket")
 
