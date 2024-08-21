@@ -14,7 +14,6 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
     if not s3_client:
         s3_client = boto3.client("s3")
     
-    # this try and accept checks for last load time-stamp
     try:
         last_load_file = s3_client.get_object(
             Bucket=bucket, Key="last_load.txt"
@@ -25,12 +24,21 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
         last_load = None
         log_message(__name__, 20, "Load function running for the first time")
 
-    # check for new parquet files since last upload. Need to figure out this logic
-    
-    read_parquet = read_parquet_from_s3(s3_client, last_load, bucket)
-    write_df_to_warehouse(read_parquet)
-    
-    
+    try: 
+        # read parquet from processed data s3
+        read_parquet = read_parquet_from_s3(s3_client, last_load, bucket)
+        log_message(__name__, 10, "Parquet file(s) read from processed data bucket")
+    except ClientError as e: 
+        log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
+        
+    try:  
+        # write new data to postrges data warehouse 
+        write_df_to_warehouse(read_parquet)
+        log_message(__name__, 10, "Data written to data warehouse")
+    except ClientError as e:
+        log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
+        
+    # create new/update last_load timestamp and put into processed data bucket
     date = datetime.now()
     store_last_load = date.strftime("%Y-%m-%d %H:%M:%S")
     s3_client.put_object(

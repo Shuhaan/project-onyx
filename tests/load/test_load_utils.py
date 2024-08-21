@@ -1,11 +1,12 @@
 
 import pytest, os
-from load_utils import read_parquets_from_s3, write_df_to_warehouse
+from load_utils import read_parquets_from_s3, write_df_to_warehouse, get_secret
 import pandas as pd
 from datetime import datetime, tzinfo
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 # @pytest.mark.skip
 class TestReadFromS3:
@@ -42,7 +43,6 @@ class TestWriteToWarehouse:
         
         query = "SELECT * FROM dim_counterparty LIMIT 2;"
         response = util_connect_to_mock_warehouse.run(query)
-        print(response)
         assert response == [
             [1001, 'Anonymous Co.', 2001], 
             [1002, 'Unknown Enterprises', 2002]
