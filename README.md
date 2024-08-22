@@ -20,17 +20,24 @@ Project objectives:
 4. Carry out analysis of data for presentation
 
 # Stage 
+
 ## Stage 1: Extract
+
 ### Task 1: Extract due
+
 - **Check and extract** from Totesys PostGRES Database → S3 - MAX 30 MINUTES
+
 ### Task 2: Infrastructure Setup
+
 - **Terraform** to create infrastructure and Lambda Function:
   - Create two S3 buckets for the data:
     - **Ingestion Bucket** and **Processed Data Bucket** to hold data.
   - Create one bucket for the code itself.
   - One bucket for Terraform state and one bucket to hold the code.
     - The first time we run Terraform, we need a **Terraform state bucket** already in existence on S3 in order to hold the TF state.
+
 ### Task 3: Lambda Function for Data Extraction
+
 - Lambda function to extract data:
   - Initially upload all tables to the bucket, later upload modifications of database to the bucket.
   - Upload as **JSON files**.
@@ -40,21 +47,33 @@ Project objectives:
 - Extraction triggers a message to **CloudWatch**.
 - All errors and status are logged to **CloudWatch**:
   - CloudWatch will send an email in case of a major error.
+
 ## Stage 2: Transform
+
 ### Task 1: Transform Lambda Function
+
 - Transform Lambda function triggers every time there is new data in the Ingestion bucket.
 - **Pass the transformed data** to the Processed Data Bucket.
+
 ### Task 2: OLTP → OLAP Transformation Schema
+
 - ERD here: [https://dbdiagram.io/d/Final_ERD-66bb73418b4bb5230e01b5bf](https://dbdiagram.io/d/Final_ERD-66bb73418b4bb5230e01b5bf)
+
 ## Stage 3: Load
+
 ### Task 1: Loading Processed Data
+
 - Take data from the Processed Data bucket and load it into the **Warehouse**.
 - Data is now in **OLAP format** and can be queried by Business Intelligence or Data Science tools:
   - Other tools may include Jupyter notebooks and/or pandas.
+
 ## Stage 4: Analytics
+
 ### Task 1: Data Validation and Analysis
+
 - **Data Validation:** Ensure the data's suitability for analytics.
 - **Analysis:** Carry out analysis using **Power BI**.
+
 # Code Documentation
 
 Do this in terminal before using pytest:
