@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 # @pytest.mark.skip
 class TestReadFromS3:
     
@@ -61,3 +60,7 @@ class TestWriteToWarehouse:
         print(last_mod)
         assert last_load and last_load>last_mod
     
+    # def test_timestamp_condition_passing_in_read_parquet_function(self, s3_client, util_populate_mock_s3):
+    #     load("test-processed-bucket", s3_client)
+    #     last_load = "2024-08-30 23:10:51+0000"
+    #     assert read_parquets_from_s3(s3_client, last_load, "test-processed-bucket")

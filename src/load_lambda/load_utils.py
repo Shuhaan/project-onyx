@@ -1,7 +1,6 @@
 import pandas as pd
 import boto3, logging, json
 from botocore.exceptions import ClientError
-# from typing import List, Dict, Any
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from io import BytesIO
@@ -28,7 +27,6 @@ def get_secret(
         secret_dict = get_secret_value_response["SecretString"]
         secret = json.loads(secret_dict)
         result = f"postgresql+pg8000://{secret['username']}:{secret['password']}@{secret['host']}:{secret['port']}/{secret['dbname']}"
-        print(result)
         return result
 
     except ClientError as e:
@@ -140,6 +138,3 @@ def write_df_to_warehouse(read_parquet, engine_string=None):
                                 if_exists='append', index=False)
     except SQLAlchemyError as e:
         log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
-
-
-get_secret()
