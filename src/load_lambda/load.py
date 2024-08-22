@@ -1,7 +1,7 @@
 import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime, timezone
-from load_utils import log_message, read_parquet_from_s3, \
+from load_utils import log_message, read_parquets_from_s3, \
     write_df_to_warehouse, get_secret
 
 
@@ -28,7 +28,7 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
 
     try: 
         # read parquet from processed data s3
-        read_parquet = read_parquet_from_s3(s3_client, last_load, bucket)
+        read_parquet = read_parquets_from_s3(s3_client, last_load, bucket)
         log_message(__name__, 10, "Parquet file(s) read from processed data bucket")
     except ClientError as e: 
         log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")

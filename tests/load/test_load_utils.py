@@ -42,10 +42,10 @@ class TestWriteToWarehouse:
         ]
 
     def test_last_load_timestamp(self,s3_client, util_populate_mock_s3):
-        sleep(2)
+        sleep(1)
         date = datetime.now(timezone.utc)
         store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
-        print(store_last_load)
+        # print(store_last_load)
         s3_client.put_object(
             Bucket="test-processed-bucket", Key="last_load.txt", Body=store_last_load
         )
@@ -54,13 +54,9 @@ class TestWriteToWarehouse:
         )
         last_load = last_load_file["Body"].read().decode("utf-8")
         last_load = datetime.strptime(last_load,"%Y-%m-%d %H:%M:%S%z")
-        print(last_load)
+        # print(last_load)
         bucket_contents = s3_client.list_objects(Bucket="test-processed-bucket")["Contents"]
         last_mod = bucket_contents[0]['LastModified']
-        print(last_mod)
+        # print(last_mod)
         assert last_load and last_load>last_mod
     
-    # def test_timestamp_condition_passing_in_read_parquet_function(self, s3_client, util_populate_mock_s3):
-    #     load("test-processed-bucket", s3_client)
-    #     last_load = "2024-08-30 23:10:51+0000"
-    #     assert read_parquets_from_s3(s3_client, last_load, "test-processed-bucket")

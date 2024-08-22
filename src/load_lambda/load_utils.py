@@ -80,35 +80,41 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
                                 - list of fact dataframes
 
     """    
+    last_load = '2024-08-20 23:10:51+0000'
     bucket_contents = s3_client.list_objects(Bucket=bucket)["Contents"]
-    last_mod = bucket_contents[0]['LastModified']
-    dim_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
-                       if not '.txt' in obj['Key'] and "dim_" in obj['Key']]
-    fact_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
-                        if not '.txt' in obj['Key'] and "fact_" in obj['Key']]
-    # print(last_mod)
+    print(last_load)
     last_load = datetime.strptime(last_load,"%Y-%m-%d %H:%M:%S%z")
-    # print(last_load)
-    # print(last_load and last_load < last_mod)
-    if last_load and last_load < last_mod:
-        dim_parquet_files_list = [file_data["Key"] for file_data in bucket_contents
-                                  if not '.txt' in file_data['Key'] and "dim_" in file_data['Key']]
-        fact_parquet_files_list = [file_data["Key"] for file_data in bucket_contents
-                                   if not '.txt' in file_data['Key'] and "fact_" in file_data['Key']]
-        dim_df_list = []
-        for parquet_file_name in dim_parquet_files_list:   
-            response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
-            data = response['Body'].read()
-            df = pd.read_parquet(BytesIO(data))
-            dim_df_list.append(df)
-        fact_df_list = []
-        for parquet_file_name in fact_parquet_files_list:   
-            response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
-            data = response['Body'].read()
-            df = pd.read_parquet(BytesIO(data))
-            fact_df_list.append(df)
-        return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
-            
+    
+    new_files = [file for file in bucket_contents 
+                 if last_load and last_load < file['LastModified']
+                  and '.txt' not in file ]
+    
+    dim_table_names = [obj['Key'].split('.')[0] for obj in new_files
+                       if "dim_" in obj['Key']]
+    fact_table_names = [obj['Key'].split('.')[0] for obj in new_files
+                        if "fact_" in obj['Key']]
+    
+    dim_parquet_files_list = [file_data["Key"] for file_data in new_files
+                               if "dim_" in file_data['Key']]
+
+    fact_parquet_files_list = [file_data["Key"] for file_data in new_files
+                               if "fact_" in file_data['Key']]
+
+    dim_df_list = []
+    for parquet_file_name in dim_parquet_files_list:   
+        response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
+        data = response['Body'].read()
+        df = pd.read_parquet(BytesIO(data))
+        dim_df_list.append(df)
+        
+    fact_df_list = []
+    for parquet_file_name in fact_parquet_files_list:   
+        response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
+        data = response['Body'].read()
+        df = pd.read_parquet(BytesIO(data))
+        fact_df_list.append(df)
+    return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
+        
 
 def write_df_to_warehouse(read_parquet, engine_string=None):
     """
