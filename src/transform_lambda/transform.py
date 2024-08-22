@@ -71,8 +71,8 @@ def transform(source_bucket: str, file: str, output_bucket: str):
     table = file.split("/")[0]
     df = create_df_from_json_in_bucket(source_bucket, file)
     df, output_table = process_table(df, table, output_bucket)
-    #print(output_table)
-    #print(df)
+    # print(output_table)
+    # print(df)
 
     # Save and upload the processed file
     if output_table:

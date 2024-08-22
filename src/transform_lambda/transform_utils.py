@@ -191,6 +191,10 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
             df = df.drop(["created_at", "last_updated"], axis=1)
             output_table = "dim_design"
 
+        elif table == "department":
+            df = df.drop(["created_at", "last_updated"], axis=1)
+            output_table = "dim_department"
+
         elif table == "currency":
             currency_mapping = {
                 "GBP": "British Pound Sterling",
@@ -217,14 +221,31 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
             # print(dim_counterparty_df)
             dim_location_df = combine_parquet_from_s3(bucket, "dim_location")
             # print(dim_location_df)
-            df = dim_counterparty_df.join(
+            df = dim_counterparty_df.merge(
                 dim_location_df,
-                how="left",
-                lsuffix="legal_address_id",
-                rsuffix="location_id",
+                how="inner",
+                left_on="legal_address_id",
+                right_on="location_id",
             )
             # print(df)
             output_table = "dim_counterparty"
+
+        elif table == "staff":
+            dim_staff_df = df.drop(
+                [
+                    "created_at",
+                    "last_updated",
+                ],
+                axis=1,
+            )
+            dim_department_df = combine_parquet_from_s3(bucket, "dim_department")
+            df = dim_staff_df.merge(
+                dim_department_df,
+                how="inner",
+                on="department_id"
+            )
+            print(df)
+            output_table = "dim_staff"
 
         else:
             log_message(
