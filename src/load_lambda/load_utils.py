@@ -1,12 +1,13 @@
 import pandas as pd
-import boto3, logging, json
+import boto3, logging, json, os
 from botocore.exceptions import ClientError
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from io import BytesIO
 from datetime import datetime
+from dotenv import load_dotenv
 
-
+load_dotenv()
 
 def get_secret(
     secret_name: str = "project-onyx/warehouse-db-login", 
@@ -80,9 +81,9 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
                                 - list of fact dataframes
 
     """    
-    last_load = '2024-08-20 23:10:51+0000'
+    
     bucket_contents = s3_client.list_objects(Bucket=bucket)["Contents"]
-    print(last_load)
+
     last_load = datetime.strptime(last_load,"%Y-%m-%d %H:%M:%S%z")
     
     new_files = [file for file in bucket_contents 
@@ -116,7 +117,7 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
     return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
         
 
-def write_df_to_warehouse(read_parquet, engine_string=None):
+def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
     """
     Summary:
     receives lists of table names, and lists of dataframes and writes the

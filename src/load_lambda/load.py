@@ -23,7 +23,7 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
         last_load = last_load_file["Body"].read().decode("utf-8")
         log_message(__name__, 20, f"Load function last ran at {last_load}")
     except s3_client.exceptions.NoSuchKey:
-        last_load = None
+        last_load = '1900-01-01 00:00:00+0000'
         log_message(__name__, 20, "Load function running for the first time")
 
     try: 
