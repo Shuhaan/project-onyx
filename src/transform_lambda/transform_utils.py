@@ -1,5 +1,5 @@
 import pandas as pd
-import logging, json, boto3
+import logging, json, boto3, time
 from datetime import datetime
 from typing import Optional
 from botocore.exceptions import ClientError
@@ -173,7 +173,9 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
         raise
 
 
-def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
+def process_table(
+    df: pd.DataFrame, file: str, bucket: str, timer: int = 120, s3_client=None
+):
     """
     Process specific table based on the file name and save/upload the result.
     """
@@ -212,6 +214,7 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
             output_table = "dim_currency"
 
         elif table == "counterparty":  # combine counterparty with address table
+            time.sleep(timer)
             # print(dim_counterparty_df)
             dim_location_df = combine_parquet_from_s3(bucket, "dim_location")
             # print(dim_location_df)
@@ -246,6 +249,7 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
             output_table = "dim_counterparty"
 
         elif table == "staff":
+            time.sleep(timer)
             dim_department_df = combine_parquet_from_s3(bucket, "dim_department")
             df = df.merge(dim_department_df, how="inner", on="department_id")
             # print(df)
