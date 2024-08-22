@@ -35,7 +35,7 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
         
     try:  
         # write new data to postrges data warehouse 
-        write_df_to_warehouse(read_parquet)
+        write_df_to_warehouse(read_parquet , None)
         log_message(__name__, 10, "Data written to data warehouse")
     except ClientError as e:
         log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
