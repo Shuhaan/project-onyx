@@ -27,10 +27,8 @@ def get_secret(
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)
         secret_dict = get_secret_value_response["SecretString"]
         secret = json.loads(secret_dict)
-
-        #! secret['engine'] > secret['HOST']
-
-        result = f"postgresql+pg8000://{secret['username']}:{secret['password']}@{secret['engine']}:{secret['port']}/{secret['dbname']}"
+        result = f"postgresql+pg8000://{secret['username']}:{secret['password']}@{secret['host']}:{secret['port']}/{secret['dbname']}"
+        print(result)
         return result
 
     except ClientError as e:
@@ -85,15 +83,15 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
 
     """    
     bucket_contents = s3_client.list_objects(Bucket=bucket)["Contents"]
+    last_mod = bucket_contents[0]['LastModified']
     dim_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
                        if not '.txt' in obj['Key'] and "dim_" in obj['Key']]
     fact_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
                         if not '.txt' in obj['Key'] and "fact_" in obj['Key']]
-    last_mod = bucket_contents[0]['LastModified']
-    print(last_mod)
+    # print(last_mod)
     last_load = datetime.strptime(last_load,"%Y-%m-%d %H:%M:%S%z")
-    print(last_load)
-    print(last_load and last_load < last_mod)
+    # print(last_load)
+    # print(last_load and last_load < last_mod)
     if last_load and last_load < last_mod:
         dim_parquet_files_list = [file_data["Key"] for file_data in bucket_contents
                                   if not '.txt' in file_data['Key'] and "dim_" in file_data['Key']]
@@ -142,3 +140,6 @@ def write_df_to_warehouse(read_parquet, engine_string=None):
                                 if_exists='append', index=False)
     except SQLAlchemyError as e:
         log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
+
+
+get_secret()

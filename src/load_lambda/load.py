@@ -1,15 +1,17 @@
-import boto3, os
-import pandas as pd
+import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime, timezone
-from dotenv import load_dotenv
 from load_utils import log_message, read_parquet_from_s3, \
     write_df_to_warehouse, get_secret
 
 
-load_dotenv()
-
 def load(bucket="onyx-processed-data-bucket", s3_client=None):
+    """_summary_
+
+    Args:
+        bucket (str, optional): _description_. Defaults to "onyx-processed-data-bucket".
+        s3_client (_type_, optional): _description_. Defaults to None.
+    """
     log_message(__name__, 10, "Entered load function")
     if not s3_client:
         s3_client = boto3.client("s3")
