@@ -214,6 +214,7 @@ def process_table(
             output_table = "dim_currency"
 
         elif table == "counterparty":  # combine counterparty with address table
+            log_message(__name__, 10, "Entered counterparty inside process_table")
             time.sleep(timer)
             # print(dim_counterparty_df)
             dim_location_df = combine_parquet_from_s3(bucket, "dim_location")
@@ -249,10 +250,11 @@ def process_table(
             output_table = "dim_counterparty"
 
         elif table == "staff":
+            log_message(__name__, 10, "Entered staff inside process_table")
             time.sleep(timer)
             dim_department_df = combine_parquet_from_s3(bucket, "dim_department")
             df = df.merge(dim_department_df, how="inner", on="department_id")
-            # print(df)
+            log_message(__name__, 10, "merged staff data frame with dim_department")
             df = df.drop(
                 [
                     "department_id",
@@ -261,6 +263,7 @@ def process_table(
                 ],
                 axis=1,
             )
+            log_message(__name__, 10, "created staff data frame")
             output_table = "dim_staff"
 
         elif table == "sales_order":
@@ -285,18 +288,22 @@ def process_table(
 
 
 def combine_parquet_from_s3(bucket: str, directory: str, s3_client=None):
+    log_message(__name__, 10, "Entered combine_parquet_from_s3")
     if not s3_client:
         s3_client = boto3.client("s3")
     directory_files = list_s3_files_by_prefix(bucket, directory)
-    # print(directory_files)
+    log_message(__name__, 10, "list of files: " + str(directory_files))
     sorted_directory_files = sorted(directory_files)
-    # print(sorted_directory_files)
+    log_message(__name__, 10, "list of sorted files: " + str(sorted_directory_files))
     dfs = []
     for file in sorted_directory_files:
         response = s3_client.get_object(Bucket=bucket, Key=file)
         data = response["Body"].read()
         df = pd.read_parquet(BytesIO(data))
+        log_message(__name__, 10, "df: " + df)
         dfs.append(df)
+    log_message(__name__, 10, "list of dfs: " + dfs)
     combined_df = pd.concat(dfs, ignore_index=True)
     combined_df.drop_duplicates(keep="last", inplace=True)
+    log_message(__name__, 10, "combined_df " + combined_df)
     return combined_df

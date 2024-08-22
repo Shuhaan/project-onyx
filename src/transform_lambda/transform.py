@@ -14,7 +14,7 @@ from transform_utils import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,  # Set the minimum logging level
+    level=logging.DEBUG,  # Set the minimum logging level
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     force=True,
     datefmt="%d/%m/%Y %I:%M:%S %p",
@@ -38,11 +38,11 @@ def lambda_handler(event: dict, context: Any):
     log_message(__name__, 10, "Entered transform_lambda_handler")
     source_bucket = event["Records"][0]["s3"]["bucket"]["name"]
     new_file = event["Records"][0]["s3"]["object"]["key"]
-
+    log_message(__name__, 10, "Calling transform with " + new_file)
     transform(source_bucket, new_file, "onyx-processed-data-bucket")
 
 
-def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 120):
+def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 60):
     """
     Transforms JSON files from S3 and uploads the processed files back to S3,
     including generating dim_date separately.
