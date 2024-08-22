@@ -239,13 +239,19 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
                 axis=1,
             )
             dim_department_df = combine_parquet_from_s3(bucket, "dim_department")
-            df = dim_staff_df.merge(
-                dim_department_df,
-                how="inner",
-                on="department_id"
-            )
-            print(df)
+            df = dim_staff_df.merge(dim_department_df, how="inner", on="department_id")
+            # print(df)
             output_table = "dim_staff"
+
+        elif table == "sales_order":
+            # split the Name column into two columns using pd.Series.str.split()
+            df[["created_date", "created_time"]] = df["created_at"].str.split(
+                " ", expand=True
+            )
+            df[["last_updated_date", "last_updated_time"]] = df[
+                "last_updated"
+            ].str.split(" ", expand=True)
+            output_table = "fact_sales_order"
 
         else:
             log_message(
