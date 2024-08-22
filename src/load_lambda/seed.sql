@@ -1,0 +1,2 @@
+DROP DATABASE IF EXISTS load_test;
+CREATE DATABASE load_test;

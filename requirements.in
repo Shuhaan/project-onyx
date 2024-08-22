@@ -9,3 +9,6 @@ mock
 pytest-cov
 pandas
 pyarrow
+fastparquet
+parquet-tools
+sqlalchemy

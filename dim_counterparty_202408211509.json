@@ -1,0 +1,13 @@
+{
+"select * from dim_counterparty": [
+	{
+		"counterparty_id" : 1001,
+		"counterparty_legal_name" : "Anonymous Co.",
+		"legal_address_id" : 2001
+	},
+	{
+		"counterparty_id" : 1002,
+		"counterparty_legal_name" : "Unknown Enterprises",
+		"legal_address_id" : 2002
+	}
+]}
