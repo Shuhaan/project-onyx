@@ -4,10 +4,11 @@ from typing import Any
 from datetime import datetime
 import pandas as pd
 from transform_utils import (
-    get_bucket_contents,
+    list_s3_files_by_prefix,
     log_message,
     create_df_from_json_in_bucket,
     create_dim_date,
+    process_table,
 )
 
 
@@ -55,7 +56,7 @@ def transform(source_bucket: str, file: str, output_bucket: str):
 
     s3_client = boto3.client("s3")
 
-    output_bucket_contents = get_bucket_contents(output_bucket)
+    output_bucket_contents = list_s3_files_by_prefix(output_bucket)
     date = datetime.now()
     date_str = date.strftime("%Y/%m/%d/%H-%M")
 
@@ -69,65 +70,12 @@ def transform(source_bucket: str, file: str, output_bucket: str):
 
     table = file.split("/")[0]
     df = create_df_from_json_in_bucket(source_bucket, file)
-
-    # Table-specific processing
-    if table == "address":
-        df = df.rename(columns={"address_id": "location_id"}).drop(
-            ["created_at", "last_updated"], axis=1
-        )
-        output_table = "dim_location"
-
-    elif table == "design":
-        df = df.drop(["created_at", "last_updated"], axis=1)
-        output_table = "dim_design"
-
-    elif table == "currency":
-        # Define the mapping of currency codes to currency names
-        currency_mapping = {
-            "GBP": "British Pound Sterling",
-            "USD": "United States Dollar",
-            "EUR": "Euros",
-        }
-        # to do - include error handling code for currencies not in above dict
-
-        # Drop the columns and add the new currency_name column based on the currency_code
-        df = df.drop(["created_at", "last_updated"], axis=1).assign(
-            currency_name=df["currency_code"].map(currency_mapping)
-        )
-        output_table = "dim_currency"
-
-    # elif table == "counterparty":  # combine counterparty with address table
-    #     dim_counterparty_df = df.drop(
-    #         [
-    #             "commercial_contact",
-    #             "delivery_contact",
-    #             "created_at",
-    #             "last_updated",
-    #         ],
-    #         axis=1,
-    #     )
-    #     output_bucket_contents = get_bucket_contents(output_bucket)
-    #     dim_location_files=[file for file in output_bucket_contents if file.startswith("dim_location")]
-    #     sorted_dim_location_files=sorted(dim_location_files)
-    #     print(sorted_dim_location_files)
-    #     dim_location_dfs=[]
-    #     for file in sorted_dim_location_files:
-    #         dim_location_df = pd.read_parquet(file)
-    #         dim_location_dfs.append(dim_location_df)
-    #     combined_dim_location_df = pd.concat(dim_location_dfs, ignore_index=True)
-    #     combined_dim_location_df.drop_duplicates(keep='last', inplace=True)
-
-    #     output_table = "dim_counterparty"
-
-    else:
-        output_table = ""
-        log_message(__name__, 20, f"Unknown table encountered: {table}, skipping...")
+    df, output_table = process_table(df, table)
 
     # Save and upload the processed file
     if output_table:
         s3_key = f"{output_table}/{date_str}.parquet"
         df.to_parquet(f"/tmp/{output_table}.parquet")
-        
         s3_client.upload_file(f"/tmp/{output_table}.parquet", output_bucket, s3_key)
         log_message(__name__, 20, f"Uploaded {output_table} to {output_bucket}")
 

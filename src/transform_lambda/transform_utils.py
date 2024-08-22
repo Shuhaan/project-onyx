@@ -2,7 +2,7 @@ import pandas as pd
 import logging, json, boto3
 from datetime import datetime
 from typing import Optional
-from pprint import pprint
+from botocore.exceptions import ClientError
 
 
 def log_message(name: str, level: int, message: str = ""):
@@ -31,6 +31,51 @@ def log_message(name: str, level: int, message: str = ""):
         log_method(message)
     else:
         logger.error("Invalid log level: %d", level)
+
+
+def list_s3_files_by_prefix(bucket: str, prefix: str = "", s3_client=None) -> list:
+    """
+    Lists files in an S3 bucket. If a prefix is provided, it filters the files by that prefix.
+    If no prefix is provided, it lists all files in the bucket.
+
+    Args:
+        bucket (str): The name of the S3 bucket.
+        prefix (str, optional): The prefix to filter the S3 objects. Defaults to an empty string, which lists all files.
+        s3_client (boto3.client, optional): The S3 client. If not provided, a new client will be created.
+
+    Returns:
+        list: A list of keys (file paths) in the S3 bucket that match the prefix or all files if no prefix is provided.
+    """
+    if not s3_client:
+        s3_client = boto3.client("s3")
+
+    try:
+        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+
+        # Check if 'Contents' is in the response
+        if "Contents" in response:
+            file_list = [content["Key"] for content in response["Contents"]]
+            log_message(
+                __name__,
+                20,
+                f"Found {len(file_list)} files in bucket '{bucket}' with prefix '{prefix}'",
+            )
+            return file_list
+        else:
+            log_message(
+                __name__,
+                20,
+                f"No files found in bucket '{bucket}' with prefix '{prefix}'",
+            )
+            return []
+
+    except Exception as e:
+        log_message(
+            __name__,
+            40,
+            f"Failed to list files in S3 bucket '{bucket}' with prefix '{prefix}': {e}",
+        )
+        return []
 
 
 def create_df_from_json_in_bucket(
@@ -64,13 +109,30 @@ def create_df_from_json_in_bucket(
         # Determine the table name from the file path
         table = file_name.split("/")[0]
         data = json_data.get(table, [])
-        df = pd.DataFrame(data)
 
+        if not data:
+            log_message(
+                __name__, 30, f"No data found for table {table} in file {file_name}."
+            )
+            return None
+
+        df = pd.DataFrame(data)
         return df
 
+    except json.JSONDecodeError as e:
+        log_message(__name__, 40, f"JSON decoding error for file {file_name}: {e}")
+    except ClientError as e:
+        log_message(
+            __name__,
+            40,
+            f"Client error when accessing {file_name} in bucket {source_bucket}: {e}",
+        )
     except Exception as e:
-        log_message(__name__, 40, f"Error reading or processing file {file_name}: {e}")
-        return None
+        log_message(
+            __name__,
+            40,
+            f"Unexpected error reading or processing file {file_name}: {e}",
+        )
 
 
 def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
@@ -84,39 +146,70 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame containing the date dimension table.
     """
-    start = datetime.strptime(start_date, "%Y-%m-%d")
-    end = datetime.strptime(end_date, "%Y-%m-%d")
-    date_range = pd.date_range(start=start, end=end)
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+        date_range = pd.date_range(start=start, end=end)
 
-    dim_date = pd.DataFrame(date_range, columns=["date_id"])
-    dim_date["year"] = dim_date["date_id"].dt.year
-    dim_date["month"] = dim_date["date_id"].dt.month
-    dim_date["day"] = dim_date["date_id"].dt.day
-    dim_date["day_of_week"] = (
-        dim_date["date_id"].dt.weekday + 1
-    )  # 1 for Monday, 7 for Sunday
-    dim_date["day_name"] = dim_date["date_id"].dt.day_name()
-    dim_date["month_name"] = dim_date["date_id"].dt.month_name()
-    dim_date["quarter"] = dim_date["date_id"].dt.quarter
+        dim_date = pd.DataFrame(date_range, columns=["date_id"])
+        dim_date["year"] = dim_date["date_id"].dt.year
+        dim_date["month"] = dim_date["date_id"].dt.month
+        dim_date["day"] = dim_date["date_id"].dt.day
+        dim_date["day_of_week"] = dim_date["date_id"].dt.weekday + 1
+        dim_date["day_name"] = dim_date["date_id"].dt.day_name()
+        dim_date["month_name"] = dim_date["date_id"].dt.month_name()
+        dim_date["quarter"] = dim_date["date_id"].dt.quarter
 
-    dim_date["date_id"] = dim_date["date_id"].dt.strftime(
-        "%Y-%m-%d"
-    )  # Format date_id as YYYY-MM-DD
+        dim_date["date_id"] = dim_date["date_id"].dt.strftime("%Y-%m-%d")
 
-    return dim_date
+        return dim_date
+
+    except Exception as e:
+        log_message(__name__, 40, f"Error creating dim_date DataFrame: {e}")
+        raise
 
 
-def get_bucket_contents(bucket_name, s3_client=None):
+def process_table(df: pd.DataFrame, file: str, s3_client=None):
+    """
+    Process specific table based on the file name and save/upload the result.
+    """
     if not s3_client:
         s3_client = boto3.client("s3")
-    response = s3_client.list_objects(Bucket=bucket_name)
 
-    if "Contents" in response:
-        bucket_content_list = [ele["Key"] for ele in response["Contents"]]
-        return bucket_content_list
-    else:
-        return []
+    table = file.split("/")[0]
+    output_table = ""
 
+    try:
+        if table == "address":
+            df = df.rename(columns={"address_id": "location_id"}).drop(
+                ["created_at", "last_updated"], axis=1
+            )
+            output_table = "dim_location"
 
-# bucket_name="onyx-totesys-ingested-data-bucket"
-# get_bucket_contents(bucket_name)
+        elif table == "design":
+            df = df.drop(["created_at", "last_updated"], axis=1)
+            output_table = "dim_design"
+
+        elif table == "currency":
+            currency_mapping = {
+                "GBP": "British Pound Sterling",
+                "USD": "United States Dollar",
+                "EUR": "Euros",
+            }
+            df = df.drop(["created_at", "last_updated"], axis=1).assign(
+                currency_name=df["currency_code"].map(currency_mapping)
+            )
+            if df["currency_name"].isnull().any():
+                log_message(__name__, 30, f"Unmapped currency codes found in {file}.")
+            output_table = "dim_currency"
+
+        # Add more table-specific processing as needed
+        else:
+            log_message(
+                __name__, 20, f"Unknown table encountered: {table}, skipping..."
+            )
+
+        return (df, output_table)
+
+    except Exception as e:
+        log_message(__name__, 40, f"Error processing table {table}: {e}")

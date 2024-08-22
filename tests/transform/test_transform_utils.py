@@ -1,6 +1,20 @@
 import pytest
 import pandas as pd
-from transform_utils import create_df_from_json_in_bucket, create_dim_date
+from transform_utils import (
+    list_s3_files_by_prefix,
+    create_df_from_json_in_bucket,
+    create_dim_date,
+    process_table,
+)
+
+
+class TestListS3FilesByPrefix:
+    @pytest.mark.skip
+    def test_list_s3_files_by_prefix(self, write_files_to_ingested_data_bucket):
+        result = list_s3_files_by_prefix("", "")
+        expected = []
+
+        assert result == expected
 
 
 class TestCreateDFFromJSONInBucket:
@@ -33,3 +47,12 @@ class TestCreateDimDate:
         assert isinstance(
             result, pd.DataFrame
         )  # change assertion to verify data in dataframe
+
+
+class TestProcessTable:
+    @pytest.mark.skip
+    def test_process_table(self, write_files_to_ingested_data_bucket):
+        result = process_table("df", "file")
+        expected = ("df", "output_table")
+
+        assert result == expected
