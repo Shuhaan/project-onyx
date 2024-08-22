@@ -32,7 +32,7 @@ def get_secret(
     except ClientError as e:
         # For a list of exceptions thrown, see
         # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-        log_message(__name__, "40", e.response["Error"]["Message"])
+        log_message(__name__, 40, e.response["Error"]["Message"])
         raise e
 
 def log_message(name: str, level: int, message: str = ""):
