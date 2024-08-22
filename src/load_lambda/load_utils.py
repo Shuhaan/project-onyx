@@ -1,15 +1,13 @@
 import pandas as pd
-import boto3, logging, json, os
-from dotenv import load_dotenv
+import boto3, logging, json
 from botocore.exceptions import ClientError
-#! from typing import List, Dict, Any
+# from typing import List, Dict, Any
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from io import BytesIO
 from datetime import datetime
-#! from decimal import Decimal
 
-load_dotenv()
+
 
 def get_secret(
     secret_name: str = "project-onyx/warehouse-db-login", 
@@ -47,7 +45,7 @@ def log_message(name: str, level: int, message: str = ""):
 
     :param name: The name of the logger.
     :param level: The logging level (one of 10, 20, 30, 40, 50).
-    :param message: The message to log.
+:param message: The message to log.
     """
     logger = logging.getLogger(name)
 
@@ -70,6 +68,22 @@ def log_message(name: str, level: int, message: str = ""):
 
 
 def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-bucket"):
+    """Reads parquet files from an s3 bucket and converts to pandas dataframe
+
+    Args:
+        s3_client (boto3('s3')):    Boto3 s3 client to access s3 bucket
+        last_load (string):         read from .txt file containing timestamp 
+                                    when load function last ran
+        bucket (str, optional):     The name of the s3 bucket to be read.
+                                    Defaults to "onyx-processed-data-bucket".
+        
+    Returns:
+        list: list nested with  - list of dim table names
+                                - list of fact table name
+                                - list of dim dataframes
+                                - list of fact dataframes
+
+    """    
     bucket_contents = s3_client.list_objects(Bucket=bucket)["Contents"]
     dim_table_names = [obj['Key'].split('.')[0] for obj in bucket_contents
                        if not '.txt' in obj['Key'] and "dim_" in obj['Key']]
@@ -100,7 +114,20 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
         return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
             
 
-def write_df_to_warehouse(read_parquet, engine_string):
+def write_df_to_warehouse(read_parquet, engine_string=None):
+    """
+    Summary:
+    receives lists of table names, and lists of dataframes and writes the
+    dataframes to the associated table in a postgres database using 
+    sqlalchemy connection. dim tables are written before fact tables
+
+    Args:
+        read_parquet (lsit):    list of lists received via output of 
+                                read_parquets_from_s3 function
+        engine_string (string, optional): database credentials in 
+        sqlalchemy db string format received from AWS secrets manager via 
+        output of get_secret function. Defaults to None.
+    """    
     if not engine_string:
         engine_string = get_secret()
     dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet

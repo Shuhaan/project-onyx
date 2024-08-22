@@ -4,6 +4,6 @@ import pytest
 
 class TestLoad:
 
-    def test_func_reads_parquet_from_s3(self):
+    def test_func_only_loads_new_data(self):
         pass
 

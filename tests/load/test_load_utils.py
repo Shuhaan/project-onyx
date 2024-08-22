@@ -51,3 +51,4 @@ class TestWriteToWarehouse:
             [1001, 'Anonymous Co.', 2001], 
             [1002, 'Unknown Enterprises', 2002]
         ]
+        
