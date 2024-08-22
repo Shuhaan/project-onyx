@@ -1,9 +1,12 @@
 import pandas as pd
-import logging, json, boto3
+import logging, json, boto3, time
 from datetime import datetime
 from typing import Optional
 from botocore.exceptions import ClientError
 from io import BytesIO
+
+pd.set_option("display.max_rows", None)
+pd.set_option("display.max_columns", None)
 
 
 def log_message(name: str, level: int, message: str = ""):
@@ -170,7 +173,9 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
         raise
 
 
-def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
+def process_table(
+    df: pd.DataFrame, file: str, bucket: str, timer: int = 120, s3_client=None
+):
     """
     Process specific table based on the file name and save/upload the result.
     """
@@ -209,38 +214,53 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
             output_table = "dim_currency"
 
         elif table == "counterparty":  # combine counterparty with address table
-            dim_counterparty_df = df.drop(
-                [
-                    "commercial_contact",
-                    "delivery_contact",
-                    "created_at",
-                    "last_updated",
-                ],
-                axis=1,
-            )
+            time.sleep(timer)
             # print(dim_counterparty_df)
             dim_location_df = combine_parquet_from_s3(bucket, "dim_location")
             # print(dim_location_df)
-            df = dim_counterparty_df.merge(
+            df = df.merge(
                 dim_location_df,
                 how="inner",
                 left_on="legal_address_id",
                 right_on="location_id",
             )
-            # print(df)
+            df = df.drop(
+                [
+                    "commercial_contact",
+                    "delivery_contact",
+                    "created_at",
+                    "last_updated",
+                    "legal_address_id",
+                    "location_id",
+                ],
+                axis=1,
+            )
+            df = df.rename(
+                columns={
+                    "address_line_1": "counterparty_legal_address_line_1",
+                    "address_line_2": "counterparty_legal_address_line_2",
+                    "district": "counterparty_legal_district",
+                    "town_city": "counterparty_legal_city",
+                    "postcode": "counterparty_legal_postal_code",
+                    "country": "counterparty_legal_country",
+                    "phone": "counterparty_legal_phone_number",
+                }
+            )
             output_table = "dim_counterparty"
 
         elif table == "staff":
-            dim_staff_df = df.drop(
+            time.sleep(timer)
+            dim_department_df = combine_parquet_from_s3(bucket, "dim_department")
+            df = df.merge(dim_department_df, how="inner", on="department_id")
+            # print(df)
+            df = df.drop(
                 [
+                    "department_id",
                     "created_at",
                     "last_updated",
                 ],
                 axis=1,
             )
-            dim_department_df = combine_parquet_from_s3(bucket, "dim_department")
-            df = dim_staff_df.merge(dim_department_df, how="inner", on="department_id")
-            # print(df)
             output_table = "dim_staff"
 
         elif table == "sales_order":

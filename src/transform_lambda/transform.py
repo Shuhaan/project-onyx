@@ -42,7 +42,7 @@ def lambda_handler(event: dict, context: Any):
     transform(source_bucket, new_file, "onyx-processed-data-bucket")
 
 
-def transform(source_bucket: str, file: str, output_bucket: str):
+def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 120):
     """
     Transforms JSON files from S3 and uploads the processed files back to S3,
     including generating dim_date separately.
@@ -70,7 +70,7 @@ def transform(source_bucket: str, file: str, output_bucket: str):
 
     table = file.split("/")[0]
     df = create_df_from_json_in_bucket(source_bucket, file)
-    df, output_table = process_table(df, table, output_bucket)
+    df, output_table = process_table(df, table, output_bucket, timer=timer)
     # print(output_table)
     # print(df)
 

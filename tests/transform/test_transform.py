@@ -12,7 +12,9 @@ class TestTransform:
         new_files = [bucket["Key"] for bucket in ingested_data_files]
 
         for new_file in new_files:
-            transform("test-ingested-bucket", new_file, "test-processed-bucket")
+            transform(
+                "test-ingested-bucket", new_file, "test-processed-bucket", timer=0
+            )
 
         result_list_processed_data_bucket = (
             write_files_to_ingested_data_bucket.list_objects(

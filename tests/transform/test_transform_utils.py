@@ -52,7 +52,7 @@ class TestCreateDimDate:
 class TestProcessTable:
     @pytest.mark.skip
     def test_process_table(self, write_files_to_ingested_data_bucket):
-        result = process_table("df", "file")
+        result = process_table("df", "file", timer=0)
         expected = ("df", "output_table")
 
         assert result == expected
