@@ -3,6 +3,7 @@ import logging, json, boto3
 from datetime import datetime
 from typing import Optional
 from botocore.exceptions import ClientError
+from io import BytesIO
 
 
 def log_message(name: str, level: int, message: str = ""):
@@ -169,7 +170,7 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
         raise
 
 
-def process_table(df: pd.DataFrame, file: str, s3_client=None):
+def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
     """
     Process specific table based on the file name and save/upload the result.
     """
@@ -203,7 +204,28 @@ def process_table(df: pd.DataFrame, file: str, s3_client=None):
                 log_message(__name__, 30, f"Unmapped currency codes found in {file}.")
             output_table = "dim_currency"
 
-        # Add more table-specific processing as needed
+        elif table == "counterparty":  # combine counterparty with address table
+            dim_counterparty_df = df.drop(
+                [
+                    "commercial_contact",
+                    "delivery_contact",
+                    "created_at",
+                    "last_updated",
+                ],
+                axis=1,
+            )
+            # print(dim_counterparty_df)
+            dim_location_df = combine_parquet_from_s3(bucket, "dim_location")
+            # print(dim_location_df)
+            df = dim_counterparty_df.join(
+                dim_location_df,
+                how="left",
+                lsuffix="legal_address_id",
+                rsuffix="location_id",
+            )
+            # print(df)
+            output_table = "dim_counterparty"
+
         else:
             log_message(
                 __name__, 20, f"Unknown table encountered: {table}, skipping..."
@@ -213,3 +235,21 @@ def process_table(df: pd.DataFrame, file: str, s3_client=None):
 
     except Exception as e:
         log_message(__name__, 40, f"Error processing table {table}: {e}")
+
+
+def combine_parquet_from_s3(bucket: str, directory: str, s3_client=None):
+    if not s3_client:
+        s3_client = boto3.client("s3")
+    directory_files = list_s3_files_by_prefix(bucket, directory)
+    # print(directory_files)
+    sorted_directory_files = sorted(directory_files)
+    # print(sorted_directory_files)
+    dfs = []
+    for file in sorted_directory_files:
+        response = s3_client.get_object(Bucket=bucket, Key=file)
+        data = response["Body"].read()
+        df = pd.read_parquet(BytesIO(data))
+        dfs.append(df)
+    combined_df = pd.concat(dfs, ignore_index=True)
+    combined_df.drop_duplicates(keep="last", inplace=True)
+    return combined_df

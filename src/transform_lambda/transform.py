@@ -61,7 +61,7 @@ def transform(source_bucket: str, file: str, output_bucket: str):
     date_str = date.strftime("%Y/%m/%d/%H-%M")
 
     # Create the dim_date parquet if it does not exist
-    if "dim_date" not in output_bucket_contents:
+    if not any([file.startswith("dim_date") for file in output_bucket_contents]):
         dim_date_df = create_dim_date("1970-01-01", "2030-12-31")
         dim_date_df.to_parquet("/tmp/dim_date.parquet")
         s3_client.upload_file(
@@ -70,7 +70,9 @@ def transform(source_bucket: str, file: str, output_bucket: str):
 
     table = file.split("/")[0]
     df = create_df_from_json_in_bucket(source_bucket, file)
-    df, output_table = process_table(df, table)
+    df, output_table = process_table(df, table, output_bucket)
+    #print(output_table)
+    #print(df)
 
     # Save and upload the processed file
     if output_table:
