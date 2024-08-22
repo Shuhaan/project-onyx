@@ -3,7 +3,6 @@ from transform import transform
 
 
 class TestTransform:
-    @pytest.mark.xfail
     def test_transform_puts_files_in_processed_data_bucket(
         self, write_files_to_ingested_data_bucket
     ):
@@ -21,16 +20,15 @@ class TestTransform:
             )["Contents"]
         )
         result = [bucket["Key"] for bucket in result_list_processed_data_bucket]
-        print("List of files uploaded to mock processed bucket", result)
 
         expected = [
-            "dim_staff.parquet",
-            "dim_location.parquet",
-            "dim_design.parquet",
-            "dim_date.parquet",
-            "dim_currency.parquet",
-            "dim_counterparty.parquet",
-            "fact_sales_order.parquet",
+            "dim_staff",
+            "dim_location",
+            "dim_design",
+            "dim_date",
+            "dim_currency",
+            "dim_counterparty",
+            "fact_sales_order",
         ]
 
         for table in expected:

@@ -1,24 +1,24 @@
 #Create Email Notification Upon Transformation Error or Critical log
 
 resource "aws_cloudwatch_log_metric_filter" "transform_error_detection" {
-  name           = "transformErrorDetection"
+  name           = "TransformErrorDetection"
   pattern        = "ERROR"
   log_group_name = aws_cloudwatch_log_group.transform_log.name
 
   metric_transformation {
-    name      = "transformErrorCount"
+    name      = "TransformErrorCount"
     namespace = "ApplicationMetrics"
     value     = "1"
   }
 }
 
 resource "aws_cloudwatch_log_metric_filter" "transform_critical_detection" {
-  name           = "transformCriticalDetection"
+  name           = "TransformCriticalDetection"
   pattern        = "CRITICAL"
   log_group_name = aws_cloudwatch_log_group.transform_log.name
 
   metric_transformation {
-    name      = "transformCriticalCount"
+    name      = "TransformCriticalCount"
     namespace = "ApplicationMetrics"
     value     = "1"
   }
@@ -31,10 +31,10 @@ resource "aws_cloudwatch_log_group" "transform_log" {
 
 # Create a CloudWatch Alarm based on the Metric Filter
 resource "aws_cloudwatch_metric_alarm" "transform_error_alarm" {
-  alarm_name          = "transformErrorAlarm"
+  alarm_name          = "TransformErrorAlarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
-  metric_name         = "transformErrorCount"
+  metric_name         = "TransformErrorCount"
   namespace           = "ApplicationMetrics"
   period              = "60"
   statistic           = "Sum"
@@ -44,10 +44,10 @@ resource "aws_cloudwatch_metric_alarm" "transform_error_alarm" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "transform_critical_alarm" {
-  alarm_name          = "transformCriticalAlarm"
+  alarm_name          = "TransformCriticalAlarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
-  metric_name         = "transformCriticalCount"
+  metric_name         = "TransformCriticalCount"
   namespace           = "ApplicationMetrics"
   period              = "60"
   statistic           = "Sum"
