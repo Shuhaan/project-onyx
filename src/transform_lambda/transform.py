@@ -14,7 +14,7 @@ from transform_utils import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,  # Set the minimum logging level
+    level=logging.INFO,  # Set the minimum logging level
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     force=True,
     datefmt="%d/%m/%Y %I:%M:%S %p",
@@ -52,7 +52,7 @@ def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 60
         file (str): str of file path (key) within the source bucket.
         output_bucket (str): The name of the S3 bucket to upload processed files to.
     """
-    log_message(__name__, 20, "Transform started")
+    log_message(__name__, 20, "Transform started with " + file)
 
     s3_client = boto3.client("s3")
 
