@@ -72,107 +72,128 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
     """Reads parquet files from an s3 bucket and converts to pandas dataframe
 
     Args:
-        s3_client (boto3('s3')):    Boto3 s3 client to access s3 bucket
-        last_load (string):         read from .txt file containing timestamp
-                                    when load function last ran
-        bucket (str, optional):     The name of the s3 bucket to be read.
-                                    Defaults to "onyx-processed-data-bucket".
+        s3_client (boto3('s3')): Boto3 s3 client to access s3 bucket
+        last_load (string): Read from .txt file containing timestamp
+                            when load function last ran
+        bucket (str, optional): The name of the s3 bucket to be read.
+                                Defaults to "onyx-processed-data-bucket".
 
     Returns:
-        list: list nested with  - list of dim table names
-                                - list of fact table name
-                                - list of dim dataframes
-                                - list of fact dataframes
-
+        tuple: A tuple containing lists of dimension table names, fact table names,
+               dimension dataframes, and fact dataframes.
     """
+    try:
+        bucket_contents = s3_client.list_objects(Bucket=bucket).get("Contents", [])
+        if not bucket_contents:
+            log_message(__name__, 20, "No files found in the bucket.")
+            return [], [], [], []
 
-    bucket_contents = s3_client.list_objects(Bucket=bucket)["Contents"]
+        last_load = datetime.strptime(last_load, "%Y-%m-%d %H:%M:%S%z")
 
-    last_load = datetime.strptime(last_load, "%Y-%m-%d %H:%M:%S%z")
+        new_files = [
+            file
+            for file in bucket_contents
+            if last_load
+            and last_load < file["LastModified"]
+            and ".txt" not in file["Key"]
+        ]
+        if not new_files:
+            log_message(__name__, 20, "No new files to process.")
+            return [], [], [], []
 
-    new_files = [
-        file
-        for file in bucket_contents
-        if last_load and last_load < file["LastModified"] and ".txt" not in file
-    ]
+        dim_table_names = [
+            obj["Key"].split(".")[0] for obj in new_files if "dim_" in obj["Key"]
+        ]
+        fact_table_names = [
+            obj["Key"].split(".")[0] for obj in new_files if "fact_" in obj["Key"]
+        ]
+        dim_parquet_files_list = [
+            file_data["Key"] for file_data in new_files if "dim_" in file_data["Key"]
+        ]
 
-    dim_table_names = [
-        obj["Key"].split(".")[0] for obj in new_files if "dim_" in obj["Key"]
-    ]
-    fact_table_names = [
-        obj["Key"].split(".")[0] for obj in new_files if "fact_" in obj["Key"]
-    ]
+        fact_parquet_files_list = [
+            file_data["Key"] for file_data in new_files if "fact_" in file_data["Key"]
+        ]
+        dim_df_list = []
+        for parquet_file_name in dim_parquet_files_list:
+            response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
+            data = response["Body"].read()
+            df = pd.read_parquet(BytesIO(data))
+            dim_df_list.append(df)
 
-    dim_parquet_files_list = [
-        file_data["Key"] for file_data in new_files if "dim_" in file_data["Key"]
-    ]
+        fact_df_list = []
+        for parquet_file_name in fact_parquet_files_list:
+            response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
+            data = response["Body"].read()
+            df = pd.read_parquet(BytesIO(data))
+            fact_df_list.append(df)
 
-    fact_parquet_files_list = [
-        file_data["Key"] for file_data in new_files if "fact_" in file_data["Key"]
-    ]
+        log_message(__name__, 20, "Parquet files read and dataframes created.")
+        return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
 
-    dim_df_list = []
-    for parquet_file_name in dim_parquet_files_list:
-        response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
-        data = response["Body"].read()
-        df = pd.read_parquet(BytesIO(data))
-        dim_df_list.append(df)
-
-    fact_df_list = []
-    for parquet_file_name in fact_parquet_files_list:
-        response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
-        data = response["Body"].read()
-        df = pd.read_parquet(BytesIO(data))
-        fact_df_list.append(df)
-    read_parquet = (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
-    log_message(__name__, 20, "read_parquet has been done")
-    return read_parquet
+    except ClientError as e:
+        log_message(
+            __name__, 40, f"Error reading from S3: {e.response['Error']['Message']}"
+        )
+        raise e
+    except Exception as e:
+        log_message(__name__, 40, f"Unexpected error: {str(e)}")
+        raise e
 
 
 def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
     """
-    Summary:
-    receives lists of table names, and lists of dataframes and writes the
-    dataframes to the associated table in a postgres database using
-    sqlalchemy connection. dim tables are written before fact tables
+    Writes the DataFrames to the associated tables in a PostgreSQL database.
 
     Args:
-        read_parquet (list):    list of lists received via output of
-                                read_parquets_from_s3 function
-        engine_string (string, optional): database credentials in
-        sqlalchemy db string format received from AWS secrets manager via
-        output of get_secret function. Defaults to None.
+        read_parquet (list): List of lists received via output of
+                             read_parquets_from_s3 function.
+        engine_string (str, optional): Database credentials in SQLAlchemy db string
+                                       format. Defaults to the 'TEST-ENGINE' env variable.
     """
-    # get db credentials from secrets as engine string
-    if not engine_string:
-        engine_string = get_secret()
-    dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
-    log_message(__name__, 20, "Before engine created")
-    engine = create_engine(engine_string, connect_args={'ssl_context': False})
-    #engine = create_engine(engine_string)
-    log_message(__name__, 20, "After engine created")
-
     try:
-        for i in range(len(dim_df_list)):
-            table_name = dim_table_names[i].split("/")[0]
-            log_message(__name__, 20, table_name+" <<< **** TABLE NAME ****")
+        if not engine_string:
+            engine_string = get_secret()
+            print(engine_string)
+
+        dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
+        if not dim_table_names and not fact_table_names:
+            log_message(__name__, 20, "No data to write to the warehouse.")
+            return
+
+        log_message(__name__, 20, "Connecting to the database.")
+        engine = create_engine(engine_string, connect_args={"ssl_context": False})
+
+        for i, file in enumerate(dim_table_names):
+            table_name = file.split("/")[0]
+            print(table_name)
             new_df = dim_df_list[i]
-            current_df = pd.read_sql_table(table_name, engine)
-            log_message(__name__, 20, "done read_sql_table "+current_df.to_string())
-            id_col = current_df.columns[0]
+
+            # Optimising the read to only necessary columns
+            current_df = pd.read_sql(table_name, engine)
+            print(new_df.to_string(), current_df.to_string())
 
             merged_df = pd.concat([current_df, new_df]).drop_duplicates(
-                subset=id_col, keep="last"
+                subset=current_df.columns[0], keep="last"
             )
-            log_message(__name__, 20, "Before to_sql "+merged_df.to_string())
+            print(merged_df.to_string())
+            log_message(__name__, 20, f"Writing data to {table_name}.")
+            merged_df = merged_df.astype(
+                {"currency_id": "int", "currency_code": "str", "currency_name": "str"}
+            )
             merged_df.to_sql(table_name, engine, if_exists="replace", index=False)
-            log_message(__name__, 20, f"New data added to {table_name}")
+            log_message(__name__, 20, f"Data written to {table_name} successfully.")
 
-        for i in range(len(fact_df_list)):
-            table_name = dim_table_names[i].split("/")[0]
-            fact_df_list[i].to_sql(
-                table_name, engine, if_exists="append", index=False
+        for i, file in enumerate(fact_table_names):
+            table_name = file.split("/")[0]
+            fact_df_list[i].to_sql(table_name, engine, if_exists="append", index=False)
+            log_message(
+                __name__, 20, f"Fact data written to {table_name} successfully."
             )
-            log_message(__name__, 20, f"New data added to {table_name}")
+
     except SQLAlchemyError as e:
-        log_message(__name__, 40, f"Warehouse connection error: {str(e)}")
+        log_message(__name__, 40, f"SQLAlchemy error: {str(e)}")
+        raise e
+    except Exception as e:
+        log_message(__name__, 40, f"Unexpected error: {str(e)}")
+        raise e

@@ -8,9 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# @pytest.mark.skip
 class TestReadFromS3:
-
     def test_function_returns_list_of_dfs(self, s3_client, util_populate_mock_s3):
         dim_table_names, fact_table_names, dim_df_list, fact_df_list = (
             read_parquets_from_s3(
@@ -27,9 +25,7 @@ class TestReadFromS3:
         assert isinstance(fact_df_list[0], pd.DataFrame)
 
 
-# @pytest.mark.skip
 class TestWriteToWarehouse:
-
     @pytest.mark.xfail
     def test_function_writes_to_warehouse(
         self, s3_client, util_populate_mock_s3, util_connect_to_mock_warehouse
