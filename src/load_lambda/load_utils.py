@@ -11,7 +11,7 @@ load_dotenv()
 
 
 def get_secret(
-    secret_name: str = "project-onyx/warehouse-db-login2",
+    secret_name: str = "project-onyx/warehouse-login",
     region_name: str = "eu-west-2",
 ):
     """
@@ -30,6 +30,7 @@ def get_secret(
         secret_dict = get_secret_value_response["SecretString"]
         secret = json.loads(secret_dict)
         result = f"postgresql+pg8000://{secret['username']}:{secret['password']}@{secret['host']}:{secret['port']}/{secret['dbname']}"
+        log_message(__name__, 20, "Secret retrieved")
         return result
 
     except ClientError as e:
@@ -124,10 +125,7 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
         df = pd.read_parquet(BytesIO(data))
         fact_df_list.append(df)
     read_parquet = (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
-    print(dim_table_names, "<<< **** dim_table_names ****")
-    print(fact_table_names, "<<< **** fact_table_names ****")
-    print(dim_df_list, "<<< **** dim_df_list ****")
-    print(fact_df_list, "<<< **** fact_df_list ****")
+    log_message(__name__, 20, "read_parquet has been done")
     return read_parquet
 
 
@@ -149,28 +147,32 @@ def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
     if not engine_string:
         engine_string = get_secret()
     dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
-
-    engine = create_engine(engine_string)
+    log_message(__name__, 20, "Before engine created")
+    engine = create_engine(engine_string, connect_args={'ssl_context': False})
+    #engine = create_engine(engine_string)
+    log_message(__name__, 20, "After engine created")
 
     try:
-        index = 0
         for i in range(len(dim_df_list)):
             table_name = dim_table_names[i].split("/")[0]
-            print(table_name, "<<< **** TABLE NAME ****")
+            log_message(__name__, 20, table_name+" <<< **** TABLE NAME ****")
             new_df = dim_df_list[i]
             current_df = pd.read_sql_table(table_name, engine)
+            log_message(__name__, 20, "done read_sql_table "+current_df.to_string())
             id_col = current_df.columns[0]
 
             merged_df = pd.concat([current_df, new_df]).drop_duplicates(
                 subset=id_col, keep="last"
             )
+            log_message(__name__, 20, "Before to_sql "+merged_df.to_string())
             merged_df.to_sql(table_name, engine, if_exists="replace", index=False)
             log_message(__name__, 20, f"New data added to {table_name}")
 
         for i in range(len(fact_df_list)):
+            table_name = dim_table_names[i].split("/")[0]
             fact_df_list[i].to_sql(
-                fact_table_names[i], engine, if_exists="append", index=False
+                table_name, engine, if_exists="append", index=False
             )
-
+            log_message(__name__, 20, f"New data added to {table_name}")
     except SQLAlchemyError as e:
         log_message(__name__, 40, f"Warehouse connection error: {str(e)}")

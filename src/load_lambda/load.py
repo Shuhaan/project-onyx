@@ -1,4 +1,4 @@
-import boto3
+import boto3, logging
 from botocore.exceptions import ClientError
 from datetime import datetime, timezone
 from typing import Any
@@ -9,6 +9,16 @@ from load_utils import (
     get_secret,
 )
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,  # Set the minimum logging level
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    force=True,
+    datefmt="%d/%m/%Y %I:%M:%S %p",
+)
+
+# Create a logger instance
+logger = logging.getLogger(__name__)
 
 def lambda_handler(event: dict, context: Any):
     """
@@ -58,12 +68,13 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
 
     try:
         # write new data to postrges data warehouse
-        write_df_to_warehouse(read_parquet, None)
+        write_df_to_warehouse(read_parquet, engine_string=None)
         log_message(__name__, 10, "Data written to data warehouse")
+        # create new/update last_load timestamp and put into processed data bucket
+        date = datetime.now(timezone.utc)
+        store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
+        s3_client.put_object(Bucket=bucket, Key="last_load.txt", Body=store_last_load)
     except ClientError as e:
         log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
 
-    # create new/update last_load timestamp and put into processed data bucket
-    date = datetime.now(timezone.utc)
-    store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
-    s3_client.put_object(Bucket=bucket, Key="last_load.txt", Body=store_last_load)
+
