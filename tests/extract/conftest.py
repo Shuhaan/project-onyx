@@ -6,12 +6,6 @@ from extract_utils import log_message
 
 
 @pytest.fixture()
-def secretsmanager_client(aws_credentials):
-    with mock_aws():
-        yield boto3.client("secretsmanager")
-
-
-@pytest.fixture()
 def create_secrets(secretsmanager_client):
     # load_dotenv()
     secret_string = {

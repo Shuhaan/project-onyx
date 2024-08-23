@@ -29,6 +29,10 @@ resource "aws_iam_role" "transform_lambda_role" {
   assume_role_policy = data.aws_iam_policy_document.trust_policy.json
 }
 
+resource "aws_iam_role" "load_lambda_role" {
+  name_prefix        = "role-${var.load_lambda}"
+  assume_role_policy = data.aws_iam_policy_document.trust_policy.json
+}
 
 # ------------------------------------
 # Extract Lambda IAM Policy for S3 Write
@@ -45,6 +49,8 @@ data "aws_iam_policy_document" "s3_extract_data_policy_doc" {
     effect = "Allow"
   }
 }
+
+
 
 # Create
 resource "aws_iam_policy" "s3_extract_write_policy" {
@@ -97,7 +103,7 @@ resource "aws_iam_role_policy_attachment" "extract_lambda_cw_policy_attachment" 
 # ------------------------------------
 
 # Define
-data "aws_iam_policy_document" "secrets_manager_policy_doc" {
+data "aws_iam_policy_document" "extract_secrets_manager_policy_doc" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
     resources = ["*"]
@@ -106,16 +112,18 @@ data "aws_iam_policy_document" "secrets_manager_policy_doc" {
 }
 
 # Create
-resource "aws_iam_policy" "secrets_manager_policy" {
+resource "aws_iam_policy" "extract_secrets_manager_policy" {
   name_prefix = "secrets-manager-policy-${var.extract_lambda}-"
-  policy      = data.aws_iam_policy_document.secrets_manager_policy_doc.json
+  policy      = data.aws_iam_policy_document.extract_secrets_manager_policy_doc.json
 }
 
 # Attach
-resource "aws_iam_role_policy_attachment" "secrets_manager_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "extract_secrets_manager_policy_attachment" {
   role       = aws_iam_role.extract_lambda_role.name
-  policy_arn = aws_iam_policy.secrets_manager_policy.arn
+  policy_arn = aws_iam_policy.extract_secrets_manager_policy.arn
 }
+
+
 
 
 # --------------------------------------
@@ -127,7 +135,8 @@ resource "aws_iam_role_policy_attachment" "secrets_manager_policy_attachment" {
 data "aws_iam_policy_document" "s3_transform_data_policy_doc" {
   statement {
     actions = [
-      "s3:GetObject", "s3:ListBucket"
+      "s3:GetObject",
+      "s3:GetObject"
     ]
     resources = [
       "${aws_s3_bucket.ingested_data_bucket.arn}",
@@ -138,12 +147,11 @@ data "aws_iam_policy_document" "s3_transform_data_policy_doc" {
   statement {
     actions = [
       "s3:PutObject",
-      "s3:GetObject",
       "s3:ListBucket"
     ]
     resources = [
-      "${aws_s3_bucket.onyx_processed_bucket.arn}",
-      "${aws_s3_bucket.onyx_processed_bucket.arn}/*"
+      "${aws_s3_bucket.processed_data_bucket.arn}",
+      "${aws_s3_bucket.processed_data_bucket.arn}/*"
     ]
     effect = "Allow"
   }
@@ -193,4 +201,90 @@ resource "aws_iam_policy" "transform_cw_policy" {
 resource "aws_iam_role_policy_attachment" "transform_lambda_cw_policy_attachment" {
   role       = aws_iam_role.transform_lambda_role.name
   policy_arn = aws_iam_policy.transform_cw_policy.arn
+}
+
+
+# ------------------------------------
+# Load Lambda IAM Policy for S3 Write
+# ------------------------------------
+
+data "aws_iam_policy_document" "s3_load_data_policy_doc" {
+  statement {
+    actions = ["s3:PutObject", "s3:ListBucket", "s3:GetObject"]
+    resources = [
+      "${aws_s3_bucket.processed_data_bucket.arn}",
+      "${aws_s3_bucket.processed_data_bucket.arn}/*"
+    ]
+    effect = "Allow"
+  }
+}
+
+resource "aws_iam_policy" "s3_load_write_policy" {
+  name_prefix = "s3-policy-${var.load_lambda}-read-and-write"
+  policy      = data.aws_iam_policy_document.s3_load_data_policy_doc.json
+}
+
+# Attach
+resource "aws_iam_role_policy_attachment" "lambda_s3_load_write_policy_attachment" {
+  role       = aws_iam_role.load_lambda_role.name
+  policy_arn = aws_iam_policy.s3_load_write_policy.arn
+}
+
+
+
+# --------------------------------------
+# Load Lambda IAM Policy for CloudWatch
+# --------------------------------------
+
+# Define
+data "aws_iam_policy_document" "load_cw_document" {
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = [
+      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.load_lambda}:*"
+    ]
+    effect = "Allow"
+  }
+}
+
+# Create
+resource "aws_iam_policy" "load_cw_policy" {
+  name_prefix = "cw-policy-${var.load_lambda}"
+  policy      = data.aws_iam_policy_document.load_cw_document.json
+}
+
+
+# Attach
+resource "aws_iam_role_policy_attachment" "load_lambda_cw_policy_attachment" {
+  role       = aws_iam_role.load_lambda_role.name
+  policy_arn = aws_iam_policy.load_cw_policy.arn
+}
+
+
+# ------------------------------------
+# Load Lambda IAM Policy for Secrets Manager
+# ------------------------------------
+
+# Define
+data "aws_iam_policy_document" "load_secrets_manager_policy_doc" {
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = ["*"]
+    effect    = "Allow"
+  }
+}
+# Create
+resource "aws_iam_policy" "load_secrets_manager_policy" {
+  name_prefix = "secrets-manager-policy-${var.load_lambda}-"
+  policy      = data.aws_iam_policy_document.load_secrets_manager_policy_doc.json
+}
+
+# Attach
+resource "aws_iam_role_policy_attachment" "load_secrets_manager_policy_attachment" {
+  role       = aws_iam_role.load_lambda_role.name
+  policy_arn = aws_iam_policy.load_secrets_manager_policy.arn
 }

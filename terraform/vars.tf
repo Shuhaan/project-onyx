@@ -23,6 +23,11 @@ variable "transform_lambda" {
   default = "transform"
 }
 
+variable "load_lambda" {
+  type    = string
+  default = "load"
+}
+
 variable "python_runtime" {
   type    = string
   default = "python3.12"

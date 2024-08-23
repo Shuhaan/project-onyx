@@ -33,3 +33,9 @@ def s3_data_buckets(s3_client):
         },
     )
     return s3_client
+
+@pytest.fixture()
+def secretsmanager_client(aws_credentials):
+    with mock_aws():
+        yield boto3.client("secretsmanager")
+

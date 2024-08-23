@@ -9,4 +9,6 @@ mock
 pytest-cov
 pandas
 pyarrow
+sqlalchemy
 pdoc
+
