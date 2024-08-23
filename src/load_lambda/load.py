@@ -67,6 +67,3 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
     date = datetime.now(timezone.utc)
     store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
     s3_client.put_object(Bucket=bucket, Key="last_load.txt", Body=store_last_load)
-
-
-load()
