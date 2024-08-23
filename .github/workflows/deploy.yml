@@ -32,6 +32,9 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           DATABASE: ${{ secrets.DATABASE }}
           PORT: ${{ secrets.PORT }}
+          TEST_USER: ${{ secrets.TEST_USER }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          TEST_DATABASE: ${{ secrets.TEST_DATABASE }}
         run: make run-checks
 
   deploy-lambda:

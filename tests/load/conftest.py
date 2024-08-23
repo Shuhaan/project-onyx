@@ -40,9 +40,9 @@ def util_populate_mock_s3(s3_data_buckets):
 @pytest.fixture()
 def util_connect_to_mock_warehouse():
     return Connection(
-        user=os.getenv("TEST-USER"),
-        password=os.getenv("TEST-PASSWORD"),
-        database=os.getenv("TEST-DATABASE"),
+        user=os.getenv("TEST_USER"),
+        password=os.getenv("TEST_PASSWORD"),
+        database=os.getenv("TEST_DATABASE"),
         # host=credentials["HOST"],
         port=5432,
     )
