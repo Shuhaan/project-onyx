@@ -124,5 +124,5 @@ clean:
 
 ## Make docs
 pdocs:
-	$(call execute_in_env, pdoc --html --output-dir docs src/)
+	$(call execute_in_env, pdoc src --output-dir docs)
 	
