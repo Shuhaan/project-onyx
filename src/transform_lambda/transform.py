@@ -81,16 +81,3 @@ def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 60
         df.to_parquet(f"/tmp/{output_table}.parquet")
         s3_client.upload_file(f"/tmp/{output_table}.parquet", output_bucket, s3_key)
         log_message(__name__, 20, f"Uploaded {output_table} to {output_bucket}")
-
-
-# "address",
-# "design",
-# "transaction",
-# "sales_order",
-# "counterparty",
-# "payment",
-# "staff",
-# "purchase_order",
-# "payment_type",
-# "currency",
-# "department"

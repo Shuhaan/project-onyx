@@ -209,6 +209,14 @@ def process_table(
             df = df.drop(["created_at", "last_updated"], axis=1)
             output_table = "dim_department"
 
+        elif table == "payment_type":
+            df = df.drop(["created_at", "last_updated"], axis=1)
+            output_table = "dim_payment_type"
+
+        elif table == "transaction":
+            df = df.drop(["created_at", "last_updated"], axis=1)
+            output_table = "dim_transaction"
+
         elif table == "currency":
             currency_mapping = {
                 "GBP": "British Pound Sterling",
@@ -284,6 +292,33 @@ def process_table(
                 "last_updated"
             ].str.split(" ", expand=True)
             output_table = "fact_sales_order"
+
+        elif table == "purchase_order":
+            # split the Name column into two columns using pd.Series.str.split()
+            df[["created_date", "created_time"]] = df["created_at"].str.split(
+                " ", expand=True
+            )
+            df[["last_updated_date", "last_updated_time"]] = df[
+                "last_updated"
+            ].str.split(" ", expand=True)
+            output_table = "fact_purchase_order"
+
+        elif table == "payment":
+            # split the Name column into two columns using pd.Series.str.split()
+            df[["created_date", "created_time"]] = df["created_at"].str.split(
+                " ", expand=True
+            )
+            df[["last_updated_date", "last_updated_time"]] = df[
+                "last_updated"
+            ].str.split(" ", expand=True)
+            df = df.drop(
+                [
+                    "company_ac_number",
+                    "counterparty_ac_number",
+                ],
+                axis=1,
+            )
+            output_table = "fact_payment"
 
         else:
             log_message(
