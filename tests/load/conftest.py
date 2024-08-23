@@ -43,7 +43,7 @@ def util_connect_to_mock_warehouse():
         user=os.getenv("TEST_USER"),
         password=os.getenv("TEST_PASSWORD"),
         database=os.getenv("TEST_DATABASE"),
-        # host=credentials["HOST"],
+        host="localhost",
         port=5432,
     )
 
