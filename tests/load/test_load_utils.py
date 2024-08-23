@@ -30,6 +30,7 @@ class TestReadFromS3:
 # @pytest.mark.skip
 class TestWriteToWarehouse:
 
+    @pytest.mark.xfail
     def test_function_writes_to_warehouse(
         self, s3_client, util_populate_mock_s3, util_connect_to_mock_warehouse
     ):

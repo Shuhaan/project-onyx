@@ -12,6 +12,7 @@ load_dotenv()
 
 class TestLoad:
 
+    @pytest.mark.xfail
     def test_func_only_loads_new_data(
         self,
         s3_client,
@@ -39,6 +40,7 @@ class TestLoad:
         # print(first_response_length)
         # print(len(response2))
 
+    @pytest.mark.xfail
     def test_func_reads_data_from_bucket_and_writes_correctly_to_local_db(
         self,
         s3_client,

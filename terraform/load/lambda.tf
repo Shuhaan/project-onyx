@@ -36,7 +36,7 @@ resource "aws_lambda_function" "load_handler" {
   source_code_hash = data.archive_file.load_lambda.output_base64sha256
   runtime          = var.python_runtime
   timeout          = 300
-  layers           = [aws_lambda_layer_version.load_layer.arn]
+  layers           = [aws_lambda_layer_version.load_layer.arn, "arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:13"]
   environment {
     variables = {
       S3_BUCKET_NAME = var.processed_data_bucket
@@ -77,7 +77,7 @@ resource "null_resource" "lambda_layer" {
 resource "aws_lambda_layer_version" "load_layer" {
   layer_name          = "load_layer"
   compatible_runtimes = [var.python_runtime]
-  s3_bucket           = var.processed_data_bucket
+  s3_bucket           = var.lambda_code_bucket
   s3_key              = aws_s3_object.layer_code.key
   depends_on          = [aws_s3_object.layer_code] # triggered only if the zip file is uploaded to the bucket
 }
