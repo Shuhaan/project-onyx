@@ -9,10 +9,34 @@ from transform_utils import (
 
 
 class TestListS3FilesByPrefix:
-    @pytest.mark.skip
-    def test_list_s3_files_by_prefix(self, write_files_to_ingested_data_bucket):
-        result = list_s3_files_by_prefix("", "")
-        expected = []
+    @pytest.mark.parametrize(
+        "bucket, prefix, expected",
+        [
+            (
+                "test-ingested-bucket",
+                "",
+                [
+                    "address/2024/08/19/12-00-00.json",
+                    "counterparty/2024/08/19/12-00-00.json",
+                    "currency/2024/08/19/12-00-00.json",
+                    "department/2024/08/19/12-00-00.json",
+                    "design/2024/08/19/12-00-00.json",
+                    "payment/2024/08/19/12-00-00.json",
+                    "payment_type/2024/08/19/12-00-00.json",
+                    "purchase_order/2024/08/19/12-00-00.json",
+                    "sales_order/2024/08/19/12-00-00.json",
+                    "staff/2024/08/19/12-00-00.json",
+                    "transaction/2024/08/19/12-00-00.json",
+                ],
+            ),
+            ("test-ingested-bucket", "address", ["address/2024/08/19/12-00-00.json"]),
+        ],
+        ids=["No prefix", "Specified prefix"],
+    )
+    def test_list_s3_files_by_prefix(
+        self, write_files_to_ingested_data_bucket, bucket, prefix, expected
+    ):
+        result = list_s3_files_by_prefix(bucket, prefix)
 
         assert result == expected
 
@@ -52,7 +76,7 @@ class TestCreateDimDate:
 class TestProcessTable:
     @pytest.mark.skip
     def test_process_table(self, write_files_to_ingested_data_bucket):
-        result = process_table("df", "file")
+        result = process_table("df", "file", timer=0)
         expected = ("df", "output_table")
 
         assert result == expected

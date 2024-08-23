@@ -121,4 +121,9 @@ clean:
 	find . -type d -name '__pycache__' -delete
 	find . -type f -name '*.txt' -delete
 	find . -type f -name '*.zip' -delete
+
+## Make docs
+pdocs:
+	export PYTHONPATH=src/extract_lambda:src/transform_lambda
+	$(call execute_in_env, pdoc -o docs src/*/*.py)
 	

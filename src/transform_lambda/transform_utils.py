@@ -1,9 +1,12 @@
 import pandas as pd
-import logging, json, boto3
+import logging, json, boto3, time
 from datetime import datetime
 from typing import Optional
 from botocore.exceptions import ClientError
 from io import BytesIO
+
+pd.set_option("display.max_rows", None)
+pd.set_option("display.max_columns", None)
 
 
 def log_message(name: str, level: int, message: str = ""):
@@ -88,7 +91,7 @@ def create_df_from_json_in_bucket(
     Args:
         source_bucket (str): The name of the S3 bucket.
         file_name (str): The key (path) of the JSON file within the S3 bucket.
-        s3_client (client): The mock of AWS S3 buckets.
+        s3_client (client): AWS S3 client.
 
     Returns:
         Optional[pd.DataFrame]: A DataFrame containing the data from the JSON file,
@@ -170,9 +173,20 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
         raise
 
 
-def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
+def process_table(
+    df: pd.DataFrame, file: str, bucket: str, timer: int = 60, s3_client=None
+):
     """
-    Process specific table based on the file name and save/upload the result.
+    Process specific table based on the file name, converts it to a dataframe.
+
+    Args:
+        source_bucket (str): The name of the S3 bucket containing the source JSON files.
+        file (str): str of file path (key) within the source bucket.
+        output_bucket (str): The name of the S3 bucket to upload processed files to.
+        timer (int): delay timer in order to allow files to be created before joining on another.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the processed dim or fact table.
     """
     if not s3_client:
         s3_client = boto3.client("s3")
@@ -195,6 +209,14 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
             df = df.drop(["created_at", "last_updated"], axis=1)
             output_table = "dim_department"
 
+        elif table == "payment_type":
+            df = df.drop(["created_at", "last_updated"], axis=1)
+            output_table = "dim_payment_type"
+
+        elif table == "transaction":
+            df = df.drop(["created_at", "last_updated"], axis=1)
+            output_table = "dim_transaction"
+
         elif table == "currency":
             currency_mapping = {
                 "GBP": "British Pound Sterling",
@@ -209,38 +231,56 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
             output_table = "dim_currency"
 
         elif table == "counterparty":  # combine counterparty with address table
-            dim_counterparty_df = df.drop(
-                [
-                    "commercial_contact",
-                    "delivery_contact",
-                    "created_at",
-                    "last_updated",
-                ],
-                axis=1,
-            )
+            log_message(__name__, 20, "Entered counterparty inside process_table")
+            time.sleep(timer)
             # print(dim_counterparty_df)
             dim_location_df = combine_parquet_from_s3(bucket, "dim_location")
             # print(dim_location_df)
-            df = dim_counterparty_df.merge(
+            df = df.merge(
                 dim_location_df,
                 how="inner",
                 left_on="legal_address_id",
                 right_on="location_id",
             )
-            # print(df)
+            df = df.drop(
+                [
+                    "commercial_contact",
+                    "delivery_contact",
+                    "created_at",
+                    "last_updated",
+                    "legal_address_id",
+                    "location_id",
+                ],
+                axis=1,
+            )
+            df = df.rename(
+                columns={
+                    "address_line_1": "counterparty_legal_address_line_1",
+                    "address_line_2": "counterparty_legal_address_line_2",
+                    "district": "counterparty_legal_district",
+                    "town_city": "counterparty_legal_city",
+                    "postcode": "counterparty_legal_postal_code",
+                    "country": "counterparty_legal_country",
+                    "phone": "counterparty_legal_phone_number",
+                }
+            )
             output_table = "dim_counterparty"
 
         elif table == "staff":
-            dim_staff_df = df.drop(
+            log_message(__name__, 10, "Entered staff inside process_table")
+            time.sleep(timer)
+            dim_department_df = combine_parquet_from_s3(bucket, "dim_department")
+            df = df.merge(dim_department_df, how="inner", on="department_id")
+            log_message(__name__, 10, "merged staff data frame with dim_department")
+            df = df.drop(
                 [
+                    "department_id",
                     "created_at",
                     "last_updated",
                 ],
                 axis=1,
             )
-            dim_department_df = combine_parquet_from_s3(bucket, "dim_department")
-            df = dim_staff_df.merge(dim_department_df, how="inner", on="department_id")
-            # print(df)
+            log_message(__name__, 10, "created staff data frame")
             output_table = "dim_staff"
 
         elif table == "sales_order":
@@ -252,6 +292,33 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
                 "last_updated"
             ].str.split(" ", expand=True)
             output_table = "fact_sales_order"
+
+        elif table == "purchase_order":
+            # split the Name column into two columns using pd.Series.str.split()
+            df[["created_date", "created_time"]] = df["created_at"].str.split(
+                " ", expand=True
+            )
+            df[["last_updated_date", "last_updated_time"]] = df[
+                "last_updated"
+            ].str.split(" ", expand=True)
+            output_table = "fact_purchase_order"
+
+        elif table == "payment":
+            # split the Name column into two columns using pd.Series.str.split()
+            df[["created_date", "created_time"]] = df["created_at"].str.split(
+                " ", expand=True
+            )
+            df[["last_updated_date", "last_updated_time"]] = df[
+                "last_updated"
+            ].str.split(" ", expand=True)
+            df = df.drop(
+                [
+                    "company_ac_number",
+                    "counterparty_ac_number",
+                ],
+                axis=1,
+            )
+            output_table = "fact_payment"
 
         else:
             log_message(
@@ -265,18 +332,32 @@ def process_table(df: pd.DataFrame, file: str, bucket: str, s3_client=None):
 
 
 def combine_parquet_from_s3(bucket: str, directory: str, s3_client=None):
+    """
+    Reads a S3 bucket containing parquet files and combines them into a dataframe
+    Removes duplicate rows and keeps the last modification.
+
+    Args:
+        bucket (str): The name of the S3 bucket containing the source parquet files.
+        directory (str): The directory (table name) containing the parquet files.
+        s3_client (optional): AWS S3 client.
+
+    Returns:
+        Optional[pd.DataFrame]: A DataFrame containing the data from the combined parquet files,
+        or None if there are issues with the files or its content.
+    """
+    log_message(__name__, 20, "Entered combine_parquet_from_s3")
     if not s3_client:
         s3_client = boto3.client("s3")
     directory_files = list_s3_files_by_prefix(bucket, directory)
-    # print(directory_files)
     sorted_directory_files = sorted(directory_files)
-    # print(sorted_directory_files)
     dfs = []
     for file in sorted_directory_files:
         response = s3_client.get_object(Bucket=bucket, Key=file)
         data = response["Body"].read()
         df = pd.read_parquet(BytesIO(data))
         dfs.append(df)
+    log_message(__name__, 10, "appended dfs in combine_parquet_from_s3")
     combined_df = pd.concat(dfs, ignore_index=True)
     combined_df.drop_duplicates(keep="last", inplace=True)
+    log_message(__name__, 10, "concatted and dropped dups")
     return combined_df

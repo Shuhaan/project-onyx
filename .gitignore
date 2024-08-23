@@ -13,4 +13,6 @@ requirements.txt
 .env
 **/__pycache__/
 **/layer
-# *.parquet
+*.parquet
+docs/
+

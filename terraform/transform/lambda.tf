@@ -28,7 +28,7 @@ data "archive_file" "transform_lambda" {
   }
 }
 
-# increased timeout to 60 seconds and added layer plus environment
+# increased timeout to 300 seconds and added layer plus environment
 resource "aws_lambda_function" "transform_handler" {
   filename         = "${path.module}/../../src/transform_lambda/transform.zip"
   function_name    = "transform"
@@ -36,7 +36,7 @@ resource "aws_lambda_function" "transform_handler" {
   handler          = "transform.lambda_handler"
   source_code_hash = data.archive_file.transform_lambda.output_base64sha256
   runtime          = var.python_runtime
-  timeout          = 60
+  timeout          = 300
   layers           = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:13"]
   environment {
     variables = {
