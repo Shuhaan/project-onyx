@@ -5,7 +5,6 @@ from unittest.mock import patch
 from extract_utils import log_message
 
 
-
 @pytest.fixture()
 def create_secrets(secretsmanager_client):
     # load_dotenv()

@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "ingested_data_bucket" {
   }
 }
 
-resource "aws_s3_bucket" "onyx_processed_bucket" {
+resource "aws_s3_bucket" "processed_data_bucket" {
   bucket = var.processed_data_bucket
   tags = {
     Name = "processed-bucket"
