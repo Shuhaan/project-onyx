@@ -38,11 +38,11 @@ def lambda_handler(event: dict, context: Any):
     log_message(__name__, 10, "Entered transform_lambda_handler")
     source_bucket = event["Records"][0]["s3"]["bucket"]["name"]
     new_file = event["Records"][0]["s3"]["object"]["key"]
-
+    log_message(__name__, 10, "Calling transform with " + new_file)
     transform(source_bucket, new_file, "onyx-processed-data-bucket")
 
 
-def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 120):
+def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 60):
     """
     Transforms JSON files from S3 and uploads the processed files back to S3,
     including generating dim_date separately.
@@ -51,8 +51,9 @@ def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 12
         source_bucket (str): The name of the S3 bucket containing the source JSON files.
         file (str): str of file path (key) within the source bucket.
         output_bucket (str): The name of the S3 bucket to upload processed files to.
+        timer (int): delay timer in order to allow files to be created before joining on another.
     """
-    log_message(__name__, 20, "Transform started")
+    log_message(__name__, 20, "Transform started with " + file)
 
     s3_client = boto3.client("s3")
 

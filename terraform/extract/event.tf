@@ -1,7 +1,7 @@
 resource "aws_cloudwatch_event_rule" "extract_scheduler" {
   name                = "extract_lambda_scheduler"
-  description         = "Invoke extract lambda function every 30 mins and upload results to CloudWatch"
-  schedule_expression = "rate(5 minutes)"
+  description         = "Invoke extract lambda function every 15 mins and upload results to CloudWatch"
+  schedule_expression = "rate(15 minutes)"
   depends_on          = [aws_lambda_function.extract_handler]
 }
 
