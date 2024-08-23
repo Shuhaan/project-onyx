@@ -125,5 +125,5 @@ clean:
 ## Make docs
 pdocs:
 	export PYTHONPATH=src/extract_lambda:src/transform_lambda
-	$(call execute_in_env, pdoc -o docs src/)
+	$(call execute_in_env, pdoc -o docs src/*/*.py)
 	
