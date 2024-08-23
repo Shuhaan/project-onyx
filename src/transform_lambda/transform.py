@@ -51,6 +51,7 @@ def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 60
         source_bucket (str): The name of the S3 bucket containing the source JSON files.
         file (str): str of file path (key) within the source bucket.
         output_bucket (str): The name of the S3 bucket to upload processed files to.
+        timer (int): delay timer in order to allow files to be created before joining on another.
     """
     log_message(__name__, 20, "Transform started with " + file)
 
