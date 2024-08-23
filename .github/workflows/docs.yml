@@ -1,0 +1,51 @@
+name: Generate and Deploy Documentation
+
+on:
+  push:
+    branches:
+      - test
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the latest code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Python 3.12
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Install pip-tools to compile requirements.in into requirements.txt
+      - name: Install dependencies
+        run: make requirements
+
+      # Generate the documentation using pdoc
+      - name: Generate documentation
+        run: pdoc --html --output-dir docs src/
+
+      # Upload the generated documentation as an artifact
+      - name: Upload documentation artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Deploy the documentation to GitHub Pages
+      - id: deployment
+        uses: actions/deploy-pages@v4
