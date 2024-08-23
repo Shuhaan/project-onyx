@@ -121,4 +121,8 @@ clean:
 	find . -type d -name '__pycache__' -delete
 	find . -type f -name '*.txt' -delete
 	find . -type f -name '*.zip' -delete
+
+## Make docs
+pdocs:
+	$(call execute_in_env, pdoc --html --output-dir docs src/)
 	

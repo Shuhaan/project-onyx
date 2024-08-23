@@ -28,7 +28,7 @@ jobs:
 
       # Generate the documentation using pdoc
       - name: Generate documentation
-        run: pdoc --html --output-dir docs src/
+        run: make pdocs
 
       # Upload the generated documentation as an artifact
       - name: Upload documentation artifact
