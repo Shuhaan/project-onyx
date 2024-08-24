@@ -169,26 +169,43 @@ def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
             new_df = dim_df_list[i]
 
             # Optimising the read to only necessary columns
-            current_df = pd.read_sql(table_name, engine)
-            print(new_df.to_string(), current_df.to_string())
-
-            merged_df = pd.concat([current_df, new_df]).drop_duplicates(
-                subset=current_df.columns[0], keep="last"
-            )
-            print(merged_df.to_string())
-            log_message(__name__, 20, f"Writing data to {table_name}.")
-            merged_df = merged_df.astype(
-                {"currency_id": "int", "currency_code": "str", "currency_name": "str"}
-            )
             with engine.begin() as connection:  # Use a transaction block
+                current_df = pd.read_sql(
+                    text(f"SELECT currency_id from {table_name};"), connection
+                )["currency_id"]
+                new_df = new_df[~new_df["currency_id"].isin(current_df)]
+                print(current_df.to_string())
+
+                log_message(__name__, 20, f"Writing data to {table_name}.")
+                new_df = new_df.astype(
+                    {
+                        "currency_id": "int",
+                        "currency_code": "str",
+                        "currency_name": "str",
+                    }
+                )
+                print(new_df.to_string())
                 # Set the schema path
                 connection.execute(text("SET search_path TO project_team_3;"))
-                merged_df.to_sql(table_name, connection, schema="project_team_3", if_exists="append", index=False)
+                if not new_df.empty:
+                    new_df.to_sql(
+                        table_name,
+                        connection,
+                        schema="project_team_3",
+                        if_exists="append",
+                        index=False,
+                    )
             log_message(__name__, 20, f"Data written to {table_name} successfully.")
 
         for i, file in enumerate(fact_table_names):
             table_name = file.split("/")[0]
-            fact_df_list[i].to_sql(table_name, engine, schema="project_team_3", if_exists="append", index=False)
+            fact_df_list[i].to_sql(
+                table_name,
+                engine,
+                schema="project_team_3",
+                if_exists="append",
+                index=False,
+            )
             log_message(
                 __name__, 20, f"Fact data written to {table_name} successfully."
             )
