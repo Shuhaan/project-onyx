@@ -324,6 +324,7 @@ def process_table(
             log_message(
                 __name__, 20, f"Unknown table encountered: {table}, skipping..."
             )
+            return
 
         return (df, output_table)
 

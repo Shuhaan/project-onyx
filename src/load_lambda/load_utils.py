@@ -1,7 +1,7 @@
 import pandas as pd
 import boto3, logging, json, os
 from botocore.exceptions import ClientError
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, Table, MetaData, DateTime
 from sqlalchemy.exc import SQLAlchemyError
 from io import BytesIO
 from datetime import datetime
@@ -168,33 +168,7 @@ def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
             print(table_name)
             new_df = dim_df_list[i]
 
-            # Optimising the read to only necessary columns
-            with engine.begin() as connection:  # Use a transaction block
-                current_df = pd.read_sql(
-                    text(f"SELECT currency_id from {table_name};"), connection
-                )["currency_id"]
-                new_df = new_df[~new_df["currency_id"].isin(current_df)]
-                print(current_df.to_string())
-
-                log_message(__name__, 20, f"Writing data to {table_name}.")
-                new_df = new_df.astype(
-                    {
-                        "currency_id": "int",
-                        "currency_code": "str",
-                        "currency_name": "str",
-                    }
-                )
-                print(new_df.to_string())
-                # Set the schema path
-                connection.execute(text("SET search_path TO project_team_3;"))
-                if not new_df.empty:
-                    new_df.to_sql(
-                        table_name,
-                        connection,
-                        schema="project_team_3",
-                        if_exists="append",
-                        index=False,
-                    )
+            upload_dataframe_to_table(new_df, table_name)
             log_message(__name__, 20, f"Data written to {table_name} successfully.")
 
         for i, file in enumerate(fact_table_names):
@@ -216,3 +190,69 @@ def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
     except Exception as e:
         log_message(__name__, 40, f"Unexpected error: {str(e)}")
         raise e
+
+
+def upload_dataframe_to_table(df, table_name):
+    """
+    Converts dataframe values to match those in the reference table and uploads it, ensuring no duplicates.
+
+    Parameters:
+    df (pd.DataFrame): The dataframe to be processed and uploaded.
+    table_name (str): The name of the target table in the database.
+
+    Returns:
+    None
+    """
+    # Get the engine URL from the secret function
+    engine_url = get_secret()
+
+    # Create an SQLAlchemy engine
+    engine = create_engine(engine_url)
+
+    with engine.begin() as connection:
+        # Load metadata and the target table
+        metadata = MetaData()
+        table = Table(table_name, metadata, autoload_with=engine)
+
+        # Retrieve column names and types from the table
+        table_columns = {col.name: col.type for col in table.columns}
+        print(table_columns)
+
+        # Ensure dataframe columns match table columns
+        df = df[list(table_columns.keys())]
+
+        # Convert dataframe columns to the correct types
+        for col_name, col_type in table_columns.items():
+            if isinstance(col_type, DateTime):
+                df[col_name] = pd.to_datetime(df[col_name], errors="coerce")
+            elif col_type.__class__.__name__ == "Integer":
+                df[col_name] = pd.to_numeric(
+                    df[col_name], errors="coerce", downcast="integer"
+                )
+            elif col_type.__class__.__name__ == "Float":
+                df[col_name] = pd.to_numeric(
+                    df[col_name], errors="coerce", downcast="float"
+                )
+            elif col_type.__class__.__name__ == "String":
+                df[col_name] = df[col_name].astype(str)
+            # Add other type conversions as needed
+
+        # Determine the primary key column
+        primary_key_column = df.columns[0]
+
+        # Check for existing rows in the table to avoid duplicates
+        existing_data = pd.read_sql_table(
+            table_name, con=connection, schema="project_team_3"
+        )
+
+        # Remove duplicates based on the primary key column
+        df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]
+
+        # Upload the new rows to the table
+        df.to_sql(
+            table_name,
+            con=connection,
+            schema="project_team_3",
+            if_exists="append",
+            index=False,
+        )
