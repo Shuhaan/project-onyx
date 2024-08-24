@@ -203,56 +203,67 @@ def upload_dataframe_to_table(df, table_name):
     Returns:
     None
     """
-    # Get the engine URL from the secret function
     engine_url = get_secret()
+    log_message(__name__, 20, "Retrieved engine URL.")
 
-    # Create an SQLAlchemy engine
     engine = create_engine(engine_url)
+    log_message(__name__, 20, f"Created engine for table: {table_name}.")
 
-    with engine.begin() as connection:
-        # Load metadata and the target table
-        metadata = MetaData()
-        table = Table(table_name, metadata, autoload_with=engine)
+    try:
+        with engine.begin() as connection:
+            metadata = MetaData()
+            table = Table(table_name, metadata, autoload_with=engine)
+            log_message(__name__, 20, f"Loaded table metadata for {table_name}.")
 
-        # Retrieve column names and types from the table
-        table_columns = {col.name: col.type for col in table.columns}
-        print(table_columns)
+            table_columns = {col.name: col.type for col in table.columns}
+            log_message(__name__, 20, f"Table columns: {table_columns}")
 
-        # Ensure dataframe columns match table columns
-        df = df[list(table_columns.keys())]
+            # Ensure dataframe columns match table columns
+            df = df[list(table_columns.keys())]
 
-        # Convert dataframe columns to the correct types
-        for col_name, col_type in table_columns.items():
-            if isinstance(col_type, DateTime):
-                df[col_name] = pd.to_datetime(df[col_name], errors="coerce")
-            elif col_type.__class__.__name__ == "Integer":
-                df[col_name] = pd.to_numeric(
-                    df[col_name], errors="coerce", downcast="integer"
+            # Convert dataframe columns to the correct types
+            for col_name, col_type in table_columns.items():
+                if isinstance(col_type, DateTime):
+                    df[col_name] = pd.to_datetime(df[col_name], errors="coerce").dt.date
+                elif col_type.__class__.__name__ == "Integer":
+                    df[col_name] = pd.to_numeric(
+                        df[col_name], errors="coerce", downcast="integer"
+                    )
+                elif col_type.__class__.__name__ == "Float":
+                    df[col_name] = pd.to_numeric(
+                        df[col_name], errors="coerce", downcast="float"
+                    )
+                elif col_type.__class__.__name__ == "String":
+                    df[col_name] = df[col_name].astype(str)
+                log_message(
+                    __name__, 20, f"Converted column {col_name} to type {col_type}."
                 )
-            elif col_type.__class__.__name__ == "Float":
-                df[col_name] = pd.to_numeric(
-                    df[col_name], errors="coerce", downcast="float"
-                )
-            elif col_type.__class__.__name__ == "String":
-                df[col_name] = df[col_name].astype(str)
-            # Add other type conversions as needed
 
-        # Determine the primary key column
-        primary_key_column = df.columns[0]
+            primary_key_column = df.columns[0]
+            log_message(
+                __name__, 20, f"Primary key column identified: {primary_key_column}."
+            )
 
-        # Check for existing rows in the table to avoid duplicates
-        existing_data = pd.read_sql_table(
-            table_name, con=connection, schema="project_team_3"
-        )
+            existing_data = pd.read_sql_table(
+                table_name, con=connection, schema="project_team_3"
+            )
+            log_message(__name__, 20, f"Retrieved existing data from {table_name}.")
 
-        # Remove duplicates based on the primary key column
-        df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]
+            df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]
+            log_message(__name__, 20, f"Removed duplicate rows from {table_name}.")
 
-        # Upload the new rows to the table
-        df.to_sql(
-            table_name,
-            con=connection,
-            schema="project_team_3",
-            if_exists="append",
-            index=False,
-        )
+            df.to_sql(
+                table_name,
+                con=connection,
+                schema="project_team_3",
+                if_exists="append",
+                index=False,
+            )
+            log_message(__name__, 20, f"Uploaded data to {table_name} successfully.")
+
+    except SQLAlchemyError as e:
+        log_message(__name__, 40, f"SQLAlchemy error: {str(e)}")
+        raise e
+    except Exception as e:
+        log_message(__name__, 40, f"Unexpected error: {str(e)}")
+        raise e
