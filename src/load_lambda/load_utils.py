@@ -1,7 +1,7 @@
 import pandas as pd
 import boto3, logging, json, os
 from botocore.exceptions import ClientError
-from sqlalchemy import create_engine, text, Table, MetaData, DateTime
+from sqlalchemy import create_engine, inspect, DateTime
 from sqlalchemy.exc import SQLAlchemyError
 from io import BytesIO
 from datetime import datetime
@@ -211,11 +211,12 @@ def upload_dataframe_to_table(df, table_name):
 
     try:
         with engine.begin() as connection:
-            metadata = MetaData()
-            table = Table(table_name, metadata, autoload_with=engine)
-            log_message(__name__, 20, f"Loaded table metadata for {table_name}.")
-
-            table_columns = {col.name: col.type for col in table.columns}
+            # Use Inspector to get table schema
+            inspector = inspect(connection)
+            columns = inspector.get_columns(table_name)
+            
+            # Create a dictionary of column names and types
+            table_columns = {col['name']: col['type'] for col in columns}
             log_message(__name__, 20, f"Table columns: {table_columns}")
 
             # Ensure dataframe columns match table columns
