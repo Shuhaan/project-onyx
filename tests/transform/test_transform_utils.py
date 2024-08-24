@@ -1,5 +1,6 @@
 import pytest
 import pandas as pd
+from datetime import date
 from unittest.mock import patch, MagicMock
 from io import BytesIO
 from transform_utils import (
@@ -95,10 +96,10 @@ class TestCreateDimDate:
         assert list(result.columns) == expected_columns
 
         # And the first row should match the start date
-        assert result.iloc[0]["date_id"] == "2020-01-01"
+        assert result.iloc[0]["date_id"] == date(2020, 1, 1)
 
         # And the last row should match the end date
-        assert result.iloc[-1]["date_id"] == "2020-01-05"
+        assert result.iloc[-1]["date_id"] == date(2020, 1, 5)
 
         # Additional checks for specific values
         assert result.iloc[0]["day_of_week"] == 3  # Wednesday
