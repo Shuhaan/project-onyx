@@ -221,9 +221,9 @@ def upload_dataframe_to_table(df, table):
             )
 
             existing_data = pd.read_sql_table(
-                table_name, con=connection, schema="project_team_3"
+                table, con=connection, schema="project_team_3"
             )
-            log_message(__name__, 20, f"Retrieved existing data from {table_name}.")
+            log_message(__name__, 20, f"Retrieved existing data from {table}.")
 
             # Merge the dataframes with an indicator column
             # merged_df = df.merge(existing_data, on=primary_key_column, how='left', indicator=True)
@@ -234,16 +234,16 @@ def upload_dataframe_to_table(df, table):
             # df = df[~df.isin(existing_data.to_dict(orient='list')).all(axis=1)]
             # df = df.drop_duplicates(subset=[primary_key_column])
             print(df)
-            log_message(__name__, 20, f"Removed duplicate rows from {table_name}.")
+            log_message(__name__, 20, f"Removed duplicate rows from {table}.")
 
             df.to_sql(
-                table_name,
+                table,
                 con=connection,
                 schema="project_team_3",
                 if_exists="append",
                 index=False,
             )
-            log_message(__name__, 20, f"Uploaded data to {table_name} successfully.")
+            log_message(__name__, 20, f"Uploaded data to {table} successfully.")
 
     except SQLAlchemyError as e:
         log_message(__name__, 40, f"SQLAlchemy error: {str(e)}")
