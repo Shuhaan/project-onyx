@@ -203,6 +203,16 @@ def upload_dataframe_to_table(df, table_name):
     Returns:
     None
     """
+    skip_tables =[
+        'dim_date',
+        'dim_department',
+        'dim_transaction',
+        'fact_sales_order',
+        'fact_payment',
+        'fact_purchase_order'
+    ]
+    if table_name in skip_tables:
+        return
     engine_url = get_secret()
     log_message(__name__, 20, "Retrieved engine URL.")
 
@@ -249,8 +259,16 @@ def upload_dataframe_to_table(df, table_name):
                 table_name, con=connection, schema="project_team_3"
             )
             log_message(__name__, 20, f"Retrieved existing data from {table_name}.")
-
+            
+            # Merge the dataframes with an indicator column
+            # merged_df = df.merge(existing_data, on=primary_key_column, how='left', indicator=True)
+            
+            # Filter rows that are only in df1
+            # df = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
             df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]
+            # df = df[~df.isin(existing_data.to_dict(orient='list')).all(axis=1)]
+            # df = df.drop_duplicates(subset=[primary_key_column])
+            print(df)
             log_message(__name__, 20, f"Removed duplicate rows from {table_name}.")
 
             df.to_sql(

@@ -35,7 +35,7 @@ resource "aws_lambda_function" "load_handler" {
   handler          = "load.lambda_handler"
   source_code_hash = data.archive_file.load_lambda.output_base64sha256
   runtime          = var.python_runtime
-  timeout          = 300
+  timeout          = 900
   layers           = [aws_lambda_layer_version.load_layer.arn, "arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:13"]
   environment {
     variables = {
