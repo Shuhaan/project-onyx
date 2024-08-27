@@ -80,17 +80,16 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
     # Write the DataFrame(s) to the data warehouse
     try:
         tables = [
-            "dim_staff",
-            "dim_location",
-            "dim_counterparty",
-            "dim_currency",
-            "dim_date",
-            "dim_design",
-            "dim_transaction",
-            "dim_payment_type",
-            "fact_sales_order",
+            # "dim_staff",
+            # "dim_location",
+            # "dim_counterparty",
+            # "dim_currency",
+            # "dim_design",
+            # "dim_transaction",
+            # "dim_payment_type",
+            # "fact_sales_order",
             "fact_payment",
-            "fact_purchase_order"
+            # "fact_purchase_order"
         ]
         for table in tables:
 

@@ -1,7 +1,7 @@
 import pandas as pd
 import boto3, logging, json, os
 from botocore.exceptions import ClientError
-from sqlalchemy import create_engine, inspect, DateTime
+from sqlalchemy import create_engine, inspect, DateTime, Boolean
 from sqlalchemy.exc import SQLAlchemyError
 from io import BytesIO
 from datetime import datetime
@@ -95,7 +95,7 @@ def read_parquets_from_s3(
         last_load = datetime.strptime(last_load, "%Y-%m-%d %H:%M:%S%z")
 
         new_files = [
-            file
+            file['Key']
             for file in bucket_contents
             if last_load
             and last_load < file["LastModified"]
@@ -104,7 +104,7 @@ def read_parquets_from_s3(
         if not new_files:
             log_message(__name__, 20, "No new files to process.")
             return []
-
+        
         df_list = []
         for parquet_file_name in new_files:
             response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
@@ -189,14 +189,21 @@ def upload_dataframe_to_table(df, table):
             # Use Inspector to get table schema
             inspector = inspect(connection)
             columns = inspector.get_columns(table)
-
+            
             # Create a dictionary of column names and types
-            table_columns = {col["name"]: col["type"] for col in columns}
+            if table.startswith('fact'):
+                table_columns = {col["name"]: col["type"] for col in columns[1:]}
+                df = df[list(table_columns.keys())]
+                print('fact')
+            else:
+                table_columns = {col["name"]: col["type"] for col in columns}
+                print('dim')
+                df = df[list(table_columns.keys())]
             log_message(__name__, 20, f"Table columns: {table_columns}")
-
+            print(df.columns)
             # Ensure dataframe columns match table columns
-            df = df[list(table_columns.keys())]
 
+            print('REACHED HERE!')
             # Convert dataframe columns to the correct types
             for col_name, col_type in table_columns.items():
                 if isinstance(col_type, DateTime):
@@ -211,14 +218,17 @@ def upload_dataframe_to_table(df, table):
                     )
                 elif col_type.__class__.__name__ == "String":
                     df[col_name] = df[col_name].astype(str)
+                elif isinstance(col_type, Boolean):
+                # Convert to boolean
+                    df[col_name] = df[col_name].astype(bool)
+    
                 log_message(
                     __name__, 20, f"Converted column {col_name} to type {col_type}."
                 )
-
-            primary_key_column = df.columns[0]
-            log_message(
-                __name__, 20, f"Primary key column identified: {primary_key_column}."
-            )
+                primary_key_column = df.columns[0]
+                log_message(
+                    __name__, 20, f"Primary key column identified: {primary_key_column}."
+                )
 
             existing_data = pd.read_sql_table(
                 table, con=connection, schema="project_team_3"

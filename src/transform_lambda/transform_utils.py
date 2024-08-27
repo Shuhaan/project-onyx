@@ -258,8 +258,8 @@ def process_table(
                     "address_line_1": "counterparty_legal_address_line_1",
                     "address_line_2": "counterparty_legal_address_line_2",
                     "district": "counterparty_legal_district",
-                    "town_city": "counterparty_legal_city",
-                    "postcode": "counterparty_legal_postal_code",
+                    "city": "counterparty_legal_city",
+                    "postal_code": "counterparty_legal_postal_code",
                     "country": "counterparty_legal_country",
                     "phone": "counterparty_legal_phone_number",
                 }
