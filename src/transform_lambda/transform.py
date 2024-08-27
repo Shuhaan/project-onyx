@@ -63,7 +63,7 @@ def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 60
 
     # Create the dim_date parquet if it does not exist
     if not any([file.startswith("dim_date") for file in output_bucket_contents]):
-        dim_date_df = create_dim_date("1970-01-01", "2030-12-31")
+        dim_date_df = create_dim_date("2020-01-01", "2024-12-31")
         dim_date_df.to_parquet("/tmp/dim_date.parquet")
         s3_client.upload_file(
             "/tmp/dim_date.parquet", output_bucket, f"dim_date/{date_str}.parquet"

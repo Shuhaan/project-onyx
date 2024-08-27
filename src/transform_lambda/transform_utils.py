@@ -164,7 +164,7 @@ def create_dim_date(start_date: str, end_date: str) -> pd.DataFrame:
         dim_date["month_name"] = dim_date["date_id"].dt.month_name()
         dim_date["quarter"] = dim_date["date_id"].dt.quarter
 
-        dim_date["date_id"] = dim_date["date_id"].dt.strftime("%Y-%m-%d")
+        dim_date["date_id"] = dim_date["date_id"].dt.date
 
         return dim_date
 
@@ -324,6 +324,7 @@ def process_table(
             log_message(
                 __name__, 20, f"Unknown table encountered: {table}, skipping..."
             )
+            return
 
         return (df, output_table)
 
