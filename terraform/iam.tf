@@ -136,7 +136,7 @@ data "aws_iam_policy_document" "s3_transform_data_policy_doc" {
   statement {
     actions = [
       "s3:GetObject",
-      "s3:GetObject"
+      "s3:ListBucket"
     ]
     resources = [
       "${aws_s3_bucket.ingested_data_bucket.arn}",
