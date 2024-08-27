@@ -147,6 +147,7 @@ data "aws_iam_policy_document" "s3_transform_data_policy_doc" {
   statement {
     actions = [
       "s3:PutObject",
+      "s3:GetObject",
       "s3:ListBucket"
     ]
     resources = [
