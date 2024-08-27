@@ -68,7 +68,9 @@ def log_message(name: str, level: int, message: str = ""):
         logger.error("Invalid log level: %d", level)
 
 
-def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-bucket"):
+def read_parquets_from_s3(
+    s3_client, table, last_load, bucket="onyx-processed-data-bucket"
+):
     """Reads parquet files from an s3 bucket and converts to pandas dataframe
 
     Args:
@@ -83,10 +85,12 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
                dimension dataframes, and fact dataframes.
     """
     try:
-        bucket_contents = s3_client.list_objects(Bucket=bucket).get("Contents", [])
+        bucket_contents = s3_client.list_objects_v2(Bucket=bucket, Prefix=table).get(
+            "Contents", []
+        )
         if not bucket_contents:
             log_message(__name__, 20, "No files found in the bucket.")
-            return [], [], [], []
+            return []
 
         last_load = datetime.strptime(last_load, "%Y-%m-%d %H:%M:%S%z")
 
@@ -99,37 +103,17 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
         ]
         if not new_files:
             log_message(__name__, 20, "No new files to process.")
-            return [], [], [], []
+            return []
 
-        dim_table_names = [
-            obj["Key"].split(".")[0] for obj in new_files if "dim_" in obj["Key"]
-        ]
-        fact_table_names = [
-            obj["Key"].split(".")[0] for obj in new_files if "fact_" in obj["Key"]
-        ]
-        dim_parquet_files_list = [
-            file_data["Key"] for file_data in new_files if "dim_" in file_data["Key"]
-        ]
-
-        fact_parquet_files_list = [
-            file_data["Key"] for file_data in new_files if "fact_" in file_data["Key"]
-        ]
-        dim_df_list = []
-        for parquet_file_name in dim_parquet_files_list:
+        df_list = []
+        for parquet_file_name in new_files:
             response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
             data = response["Body"].read()
             df = pd.read_parquet(BytesIO(data))
-            dim_df_list.append(df)
+            df_list.append(df)
 
-        fact_df_list = []
-        for parquet_file_name in fact_parquet_files_list:
-            response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
-            data = response["Body"].read()
-            df = pd.read_parquet(BytesIO(data))
-            fact_df_list.append(df)
-
-        log_message(__name__, 20, "Parquet files read and dataframes created.")
-        return (dim_table_names, fact_table_names, dim_df_list, fact_df_list)
+        log_message(__name__, 20, f"Parquet {table} files read and dataframes created.")
+        return df_list
 
     except ClientError as e:
         log_message(
@@ -141,7 +125,7 @@ def read_parquets_from_s3(s3_client, last_load, bucket="onyx-processed-data-buck
         raise e
 
 
-def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
+def write_df_to_warehouse(df_list, table, engine_string=os.getenv("TEST-ENGINE")):
     """
     Writes the DataFrames to the associated tables in a PostgreSQL database.
 
@@ -155,34 +139,15 @@ def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
         if not engine_string:
             engine_string = get_secret()
 
-        dim_table_names, fact_table_names, dim_df_list, fact_df_list = read_parquet
-        if not dim_table_names and not fact_table_names:
+        if not df_list:
             log_message(__name__, 20, "No data to write to the warehouse.")
             return
 
-        log_message(__name__, 20, "Connecting to the database.")
-        engine = create_engine(engine_string, connect_args={"ssl_context": False})
+        for df in df_list:
+            log_message(__name__, 20, f"Writing data to {table}.")
 
-        for i, file in enumerate(dim_table_names):
-            table_name = file.split("/")[0]
-            print(table_name)
-            new_df = dim_df_list[i]
-
-            upload_dataframe_to_table(new_df, table_name)
-            log_message(__name__, 20, f"Data written to {table_name} successfully.")
-
-        for i, file in enumerate(fact_table_names):
-            table_name = file.split("/")[0]
-            fact_df_list[i].to_sql(
-                table_name,
-                engine,
-                schema="project_team_3",
-                if_exists="append",
-                index=False,
-            )
-            log_message(
-                __name__, 20, f"Fact data written to {table_name} successfully."
-            )
+            upload_dataframe_to_table(df, table)
+            log_message(__name__, 20, f"Data written to {table} successfully.")
 
     except SQLAlchemyError as e:
         log_message(__name__, 40, f"SQLAlchemy error: {str(e)}")
@@ -192,41 +157,41 @@ def write_df_to_warehouse(read_parquet, engine_string=os.getenv("TEST-ENGINE")):
         raise e
 
 
-def upload_dataframe_to_table(df, table_name):
+def upload_dataframe_to_table(df, table):
     """
     Converts dataframe values to match those in the reference table and uploads it, ensuring no duplicates.
 
     Parameters:
     df (pd.DataFrame): The dataframe to be processed and uploaded.
-    table_name (str): The name of the target table in the database.
+    table (str): The name of the target table in the database.
 
     Returns:
     None
     """
-    skip_tables =[
-        'dim_date',
-        'dim_department',
-        'dim_transaction',
-        'fact_sales_order',
-        'fact_payment',
-        'fact_purchase_order'
-    ]
-    if table_name in skip_tables:
-        return
+    # skip_tables = [
+    #     "dim_date",
+    #     "dim_department",
+    #     "dim_transaction",
+    #     "fact_sales_order",
+    #     "fact_payment",
+    #     "fact_purchase_order",
+    # ]
+    # if table in skip_tables:
+    #     return
     engine_url = get_secret()
     log_message(__name__, 20, "Retrieved engine URL.")
 
     engine = create_engine(engine_url)
-    log_message(__name__, 20, f"Created engine for table: {table_name}.")
+    log_message(__name__, 20, f"Created engine for table: {table}.")
 
     try:
         with engine.begin() as connection:
             # Use Inspector to get table schema
             inspector = inspect(connection)
-            columns = inspector.get_columns(table_name)
-            
+            columns = inspector.get_columns(table)
+
             # Create a dictionary of column names and types
-            table_columns = {col['name']: col['type'] for col in columns}
+            table_columns = {col["name"]: col["type"] for col in columns}
             log_message(__name__, 20, f"Table columns: {table_columns}")
 
             # Ensure dataframe columns match table columns
@@ -259,10 +224,10 @@ def upload_dataframe_to_table(df, table_name):
                 table_name, con=connection, schema="project_team_3"
             )
             log_message(__name__, 20, f"Retrieved existing data from {table_name}.")
-            
+
             # Merge the dataframes with an indicator column
             # merged_df = df.merge(existing_data, on=primary_key_column, how='left', indicator=True)
-            
+
             # Filter rows that are only in df1
             # df = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
             df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]

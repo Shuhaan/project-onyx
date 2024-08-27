@@ -77,25 +77,29 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
         last_load = "1900-01-01 00:00:00+0000"
         log_message(__name__, 20, "Load function running for the first time")
 
-    try:
-        # Read parquet files from the S3 bucket
-        read_parquet = read_parquets_from_s3(s3_client, last_load, bucket)
-        log_message(__name__, 10, "Parquet file(s) read from processed data bucket")
-
-    except ClientError as e:
-        log_message(
-            __name__,
-            40,
-            f"Error reading parquet files: {e.response['Error']['Message']}",
-        )
-        raise e
-
     # Write the DataFrame(s) to the data warehouse
     try:
-        write_df_to_warehouse(
-            read_parquet, engine_string=None
-        )  # Pass engine_string if required
-        log_message(__name__, 10, "Data written to data warehouse")
+        tables = [
+            "dim_staff",
+            "dim_location",
+            "dim_counterparty",
+            "dim_currency",
+            "dim_date",
+            "dim_design",
+            "dim_transaction",
+            "dim_payment_type",
+            "fact_sales_order",
+            "fact_payment",
+            "fact_purchase_order"
+        ]
+        for table in tables:
+
+            df_list = read_parquets_from_s3(s3_client, table, last_load, bucket)
+            log_message(__name__, 20, f"Parquet file(s) for {table} read from processed data bucket")
+            write_df_to_warehouse(
+                df_list, table, engine_string=None
+            )  # Pass engine_string if required
+            log_message(__name__, 20, f"Data written to {table} in data warehouse")
 
     except SQLAlchemyError as e:  # Handle SQLAlchemy errors specifically
         log_message(__name__, 40, f"Warehouse write error: {str(e)}")
@@ -105,7 +109,7 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
         log_message(
             __name__,
             40,
-            f"Error writing to warehouse: {e.response['Error']['Message']}",
+            f"Error: {e.response['Error']['Message']}",
         )
         raise e
 
