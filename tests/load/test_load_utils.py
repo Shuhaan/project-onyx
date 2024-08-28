@@ -48,7 +48,6 @@ class TestWriteToWarehouse:
         sleep(1)
         date = datetime.now(timezone.utc)
         store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
-        # print(store_last_load)
         s3_client.put_object(
             Bucket="test-processed-bucket", Key="last_load.txt", Body=store_last_load
         )
@@ -57,10 +56,8 @@ class TestWriteToWarehouse:
         )
         last_load = last_load_file["Body"].read().decode("utf-8")
         last_load = datetime.strptime(last_load, "%Y-%m-%d %H:%M:%S%z")
-        # print(last_load)
         bucket_contents = s3_client.list_objects(Bucket="test-processed-bucket")[
             "Contents"
         ]
         last_mod = bucket_contents[0]["LastModified"]
-        # print(last_mod)
         assert last_load and last_load > last_mod

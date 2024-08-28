@@ -89,13 +89,17 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
             "dim_payment_type",
             "fact_sales_order",
             "fact_purchase_order",
-            "dim_date",
             "fact_payment",
+            "dim_date",
         ]
         for table in tables:
 
             df_list = read_parquets_from_s3(s3_client, table, last_load, bucket)
-            log_message(__name__, 20, f"Parquet file(s) for {table} read from processed data bucket")
+            log_message(
+                __name__,
+                20,
+                f"Parquet file(s) for {table} read from processed data bucket",
+            )
             write_df_to_warehouse(
                 df_list, table, engine_string=None
             )  # Pass engine_string if required

@@ -37,8 +37,6 @@ class TestLoad:
         load("test-processed-bucket", s3_client)
 
         response2 = util_connect_to_mock_warehouse.run(query)
-        # print(first_response_length)
-        # print(len(response2))
 
     @pytest.mark.xfail
     def test_func_reads_data_from_bucket_and_writes_correctly_to_local_db(
@@ -64,7 +62,6 @@ class TestLoad:
         try:
             # read parquet from processed data s3
             read_parquet = read_parquets_from_s3(s3_client, last_load, bucket)
-            # print(read_parquet)
             log_message(__name__, 10, "Parquet file(s) read from processed data bucket")
         except ClientError as e:
             log_message(__name__, 40, f"Error: {e.response['Error']['Message']}")
@@ -84,11 +81,11 @@ class TestLoad:
 
         query = "SELECT * FROM dim_counterparty;"
         response1 = util_connect_to_mock_warehouse.run(query)
-        # print(response1)
 
-    # def test_write_df_to_warehouse_function(self, s3_client, util_populate_mock_s3):
-    #     load("test-processed-bucket", s3_client)
-    #     last_load = '2024-08-20 23:10:51+0000'
+    @pytest.mark.xfail
+    def test_write_df_to_warehouse_function(self, s3_client, util_populate_mock_s3):
+        load("test-processed-bucket", s3_client)
+        last_load = "2024-08-20 23:10:51+0000"
 
-    #     result = read_parquets_from_s3(s3_client, last_load, "test-processed-bucket")
-    #     assert result
+        result = read_parquets_from_s3(s3_client, last_load, "test-processed-bucket")
+        assert result

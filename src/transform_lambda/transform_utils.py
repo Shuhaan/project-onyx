@@ -233,9 +233,7 @@ def process_table(
         elif table == "counterparty":  # combine counterparty with address table
             log_message(__name__, 20, "Entered counterparty inside process_table")
             time.sleep(timer)
-            # print(dim_counterparty_df)
             dim_location_df = combine_parquet_from_s3(bucket, "dim_location")
-            # print(dim_location_df)
             df = df.merge(
                 dim_location_df,
                 how="inner",
@@ -280,6 +278,7 @@ def process_table(
                 ],
                 axis=1,
             )
+            
             log_message(__name__, 10, "created staff data frame")
             output_table = "dim_staff"
 
@@ -291,6 +290,18 @@ def process_table(
             df[["last_updated_date", "last_updated_time"]] = df[
                 "last_updated"
             ].str.split(" ", expand=True)
+            df = df.drop(
+                [
+                    "created_at",
+                    "last_updated",
+                ],
+                axis=1,
+            )
+            df = df.rename(
+                columns={
+                    "staff_id": "sales_staff_id",
+                    }
+            )
             output_table = "fact_sales_order"
 
         elif table == "purchase_order":
@@ -301,6 +312,13 @@ def process_table(
             df[["last_updated_date", "last_updated_time"]] = df[
                 "last_updated"
             ].str.split(" ", expand=True)
+            df = df.drop(
+                [
+                    "created_at",
+                    "last_updated",
+                ],
+                axis=1,
+            )
             output_table = "fact_purchase_order"
 
         elif table == "payment":
@@ -315,6 +333,8 @@ def process_table(
                 [
                     "company_ac_number",
                     "counterparty_ac_number",
+                    "created_at",
+                    "last_updated",
                 ],
                 axis=1,
             )

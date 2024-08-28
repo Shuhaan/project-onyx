@@ -68,12 +68,10 @@ def transform(source_bucket: str, file: str, output_bucket: str, timer: int = 60
         s3_client.upload_file(
             "/tmp/dim_date.parquet", output_bucket, f"dim_date/{date_str}.parquet"
         )
-
-    table = file.split("/")[0]
-    df = create_df_from_json_in_bucket(source_bucket, file)
-    df, output_table = process_table(df, table, output_bucket, timer=timer)
-    # print(output_table)
-    # print(df)
+    if not file.endswith(".txt"):
+        table = file.split("/")[0]
+        df = create_df_from_json_in_bucket(source_bucket, file)
+        df, output_table = process_table(df, table, output_bucket, timer=timer)
 
     # Save and upload the processed file
     if output_table:

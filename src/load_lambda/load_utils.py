@@ -1,7 +1,7 @@
 import pandas as pd
 import boto3, logging, json, os
 from botocore.exceptions import ClientError
-from sqlalchemy import create_engine, inspect, DateTime, Boolean
+from sqlalchemy import create_engine, inspect, DateTime, Boolean, Date
 from sqlalchemy.exc import SQLAlchemyError
 from io import BytesIO
 from datetime import datetime
@@ -85,6 +85,7 @@ def read_parquets_from_s3(
                dimension dataframes, and fact dataframes.
     """
     try:
+        log_message(__name__, 20, f"Entered read_parquet_from_s3 function for {table}.")
         bucket_contents = s3_client.list_objects_v2(Bucket=bucket, Prefix=table).get(
             "Contents", []
         )
@@ -95,7 +96,7 @@ def read_parquets_from_s3(
         last_load = datetime.strptime(last_load, "%Y-%m-%d %H:%M:%S%z")
 
         new_files = [
-            file['Key']
+            file["Key"]
             for file in bucket_contents
             if last_load
             and last_load < file["LastModified"]
@@ -104,13 +105,15 @@ def read_parquets_from_s3(
         if not new_files:
             log_message(__name__, 20, "No new files to process.")
             return []
-        
+
         df_list = []
         for parquet_file_name in new_files:
+            log_message(__name__, 20, f"Converting {parquet_file_name} to dataframe.")
             response = s3_client.get_object(Bucket=bucket, Key=parquet_file_name)
             data = response["Body"].read()
             df = pd.read_parquet(BytesIO(data))
             df_list.append(df)
+            log_message(__name__, 20, f"Conversion of {parquet_file_name} complete.")
 
         log_message(__name__, 20, f"Parquet {table} files read and dataframes created.")
         return df_list
@@ -180,24 +183,22 @@ def upload_dataframe_to_table(df, table):
             # Use Inspector to get table schema
             inspector = inspect(connection)
             columns = inspector.get_columns(table)
-            
+
             # Create a dictionary of column names and types
             # Ensure dataframe columns match table columns
-            if table.startswith('fact'):
-                table_columns = {col["name"]: col["type"] for col in columns[1:]}
-                df = df[list(table_columns.keys())]
-                log_message(__name__, 20, f"Confirmed correct columns in {table} ")
-            else:
-                table_columns = {col["name"]: col["type"] for col in columns}
-                df = df[list(table_columns.keys())]
-                log_message(__name__, 20, f"Confirmed correct columns in {table} ")
-                
+                       
+            table_columns = {col["name"]: col["type"] for col in columns}
+
             log_message(__name__, 20, f"Table columns: {table_columns}")
             log_message(__name__, 20, f"Dataframe columns: {df.columns} ")
 
+            primary_key_column = df.columns[0]
+            log_message(
+                __name__, 20, f"Primary key column identified: {primary_key_column}."
+            )
             # Convert dataframe columns to the correct types
             for col_name, col_type in table_columns.items():
-                if isinstance(col_type, DateTime):
+                if isinstance(col_type, DateTime) or isinstance(col_type, Date):
                     df[col_name] = pd.to_datetime(df[col_name], errors="coerce").dt.date
                 elif col_type.__class__.__name__ == "Integer":
                     df[col_name] = pd.to_numeric(
@@ -209,27 +210,25 @@ def upload_dataframe_to_table(df, table):
                     )
                 elif col_type.__class__.__name__ == "String":
                     df[col_name] = df[col_name].astype(str)
-                    
+
                 elif isinstance(col_type, Boolean):
-                # Convert to boolean
+                    # Convert to boolean
                     df[col_name] = df[col_name].astype(bool)
-    
+
                 log_message(
                     __name__, 20, f"Converted column {col_name} to type {col_type}."
                 )
-                
-            primary_key_column = df.columns[0]
-            log_message(
-                __name__, 20, f"Primary key column identified: {primary_key_column}."
-            )
 
+           
             existing_data = pd.read_sql_table(
                 table, con=connection, schema="project_team_3"
             )
             log_message(__name__, 20, f"Retrieved existing data from {table}.")
-
-            df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]
-            log_message(__name__, 20, f"Removed duplicate rows from dataframe.")
+            
+            if not table.startswith('fact'):
+                df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]
+                log_message(__name__, 20, f"Removed duplicate rows from dataframe.")
+                
             log_message(__name__, 10, f"Dataframe being uploaded: {df.head()}")
 
             df.to_sql(
