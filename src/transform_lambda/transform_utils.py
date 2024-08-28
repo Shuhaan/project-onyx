@@ -278,7 +278,7 @@ def process_table(
                 ],
                 axis=1,
             )
-            
+
             log_message(__name__, 10, "created staff data frame")
             output_table = "dim_staff"
 
@@ -300,7 +300,7 @@ def process_table(
             df = df.rename(
                 columns={
                     "staff_id": "sales_staff_id",
-                    }
+                }
             )
             output_table = "fact_sales_order"
 

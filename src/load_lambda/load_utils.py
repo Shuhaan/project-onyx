@@ -186,7 +186,7 @@ def upload_dataframe_to_table(df, table):
 
             # Create a dictionary of column names and types
             # Ensure dataframe columns match table columns
-                       
+
             table_columns = {col["name"]: col["type"] for col in columns}
 
             log_message(__name__, 20, f"Table columns: {table_columns}")
@@ -219,16 +219,15 @@ def upload_dataframe_to_table(df, table):
                     __name__, 20, f"Converted column {col_name} to type {col_type}."
                 )
 
-           
             existing_data = pd.read_sql_table(
                 table, con=connection, schema="project_team_3"
             )
             log_message(__name__, 20, f"Retrieved existing data from {table}.")
-            
-            if not table.startswith('fact'):
+
+            if not table.startswith("fact"):
                 df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]
                 log_message(__name__, 20, f"Removed duplicate rows from dataframe.")
-                
+
             log_message(__name__, 10, f"Dataframe being uploaded: {df.head()}")
 
             df.to_sql(
