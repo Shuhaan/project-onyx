@@ -168,16 +168,7 @@ def upload_dataframe_to_table(df, table):
     Returns:
     None
     """
-    # skip_tables = [
-    #     "dim_date",
-    #     "dim_department",
-    #     "dim_transaction",
-    #     "fact_sales_order",
-    #     "fact_payment",
-    #     "fact_purchase_order",
-    # ]
-    # if table in skip_tables:
-    #     return
+
     engine_url = get_secret()
     log_message(__name__, 20, "Retrieved engine URL.")
 
@@ -191,19 +182,19 @@ def upload_dataframe_to_table(df, table):
             columns = inspector.get_columns(table)
             
             # Create a dictionary of column names and types
+            # Ensure dataframe columns match table columns
             if table.startswith('fact'):
                 table_columns = {col["name"]: col["type"] for col in columns[1:]}
                 df = df[list(table_columns.keys())]
-                print('fact')
+                log_message(__name__, 20, f"Confirmed correct columns in {table} ")
             else:
                 table_columns = {col["name"]: col["type"] for col in columns}
-                print('dim')
                 df = df[list(table_columns.keys())]
+                log_message(__name__, 20, f"Confirmed correct columns in {table} ")
+                
             log_message(__name__, 20, f"Table columns: {table_columns}")
-            print(df.columns)
-            # Ensure dataframe columns match table columns
+            log_message(__name__, 20, f"Dataframe columns: {df.columns} ")
 
-            print('REACHED HERE!')
             # Convert dataframe columns to the correct types
             for col_name, col_type in table_columns.items():
                 if isinstance(col_type, DateTime):
@@ -218,6 +209,7 @@ def upload_dataframe_to_table(df, table):
                     )
                 elif col_type.__class__.__name__ == "String":
                     df[col_name] = df[col_name].astype(str)
+                    
                 elif isinstance(col_type, Boolean):
                 # Convert to boolean
                     df[col_name] = df[col_name].astype(bool)
@@ -225,26 +217,20 @@ def upload_dataframe_to_table(df, table):
                 log_message(
                     __name__, 20, f"Converted column {col_name} to type {col_type}."
                 )
-                primary_key_column = df.columns[0]
-                log_message(
-                    __name__, 20, f"Primary key column identified: {primary_key_column}."
-                )
+                
+            primary_key_column = df.columns[0]
+            log_message(
+                __name__, 20, f"Primary key column identified: {primary_key_column}."
+            )
 
             existing_data = pd.read_sql_table(
                 table, con=connection, schema="project_team_3"
             )
             log_message(__name__, 20, f"Retrieved existing data from {table}.")
 
-            # Merge the dataframes with an indicator column
-            # merged_df = df.merge(existing_data, on=primary_key_column, how='left', indicator=True)
-
-            # Filter rows that are only in df1
-            # df = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
             df = df[~df[primary_key_column].isin(existing_data[primary_key_column])]
-            # df = df[~df.isin(existing_data.to_dict(orient='list')).all(axis=1)]
-            # df = df.drop_duplicates(subset=[primary_key_column])
-            print(df)
-            log_message(__name__, 20, f"Removed duplicate rows from {table}.")
+            log_message(__name__, 20, f"Removed duplicate rows from dataframe.")
+            log_message(__name__, 10, f"Dataframe being uploaded: {df.head()}")
 
             df.to_sql(
                 table,

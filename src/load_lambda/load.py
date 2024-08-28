@@ -80,16 +80,17 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
     # Write the DataFrame(s) to the data warehouse
     try:
         tables = [
-            # "dim_staff",
-            # "dim_location",
-            # "dim_counterparty",
-            # "dim_currency",
-            # "dim_design",
-            # "dim_transaction",
-            # "dim_payment_type",
-            # "fact_sales_order",
+            "dim_staff",
+            "dim_location",
+            "dim_counterparty",
+            "dim_currency",
+            "dim_design",
+            "dim_transaction",
+            "dim_payment_type",
+            "fact_sales_order",
+            "fact_purchase_order",
+            "dim_date",
             "fact_payment",
-            # "fact_purchase_order"
         ]
         for table in tables:
 
@@ -112,16 +113,16 @@ def load(bucket="onyx-processed-data-bucket", s3_client=None):
         )
         raise e
 
-    # # Update the last load timestamp in S3
-    # try:
-    #     date = datetime.now(timezone.utc)
-    #     store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
-    #     s3_client.put_object(Bucket=bucket, Key="last_load.txt", Body=store_last_load)
-    #     log_message(__name__, 20, f"Updated last load timestamp to {store_last_load}")
+    # Update the last load timestamp in S3
+    try:
+        date = datetime.now(timezone.utc)
+        store_last_load = date.strftime("%Y-%m-%d %H:%M:%S%z")
+        s3_client.put_object(Bucket=bucket, Key="last_load.txt", Body=store_last_load)
+        log_message(__name__, 20, f"Updated last load timestamp to {store_last_load}")
 
-    # except ClientError as e:
-    #     log_message(
-    #         __name__,
-    #         40,
-    #         f"Error updating last load timestamp: {e.response['Error']['Message']}",
-    #     )
+    except ClientError as e:
+        log_message(
+            __name__,
+            40,
+            f"Error updating last load timestamp: {e.response['Error']['Message']}",
+        )
