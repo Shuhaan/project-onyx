@@ -9,6 +9,8 @@
 - [Code Documentation](#code-documentation)
 - [Links](#links)
 
+<img src="./src/Totesys ETL Pipeline.jpeg" alt="ETL Pipeline"></img>
+
 ## Introduction
 
 Team Onyx consists of: Shuhaan, Ayub, Hasan, Arif, Saif and Ewan
