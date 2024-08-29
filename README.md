@@ -9,6 +9,7 @@
 - [Code Documentation](#code-documentation)
 - [Links](#links)
 
+## Totesys ETL Infrastructure
 <img src="./src/Totesys ETL Pipeline.jpeg" alt="ETL Pipeline"></img>
 
 ## Introduction
