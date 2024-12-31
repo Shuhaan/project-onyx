@@ -12,7 +12,7 @@ PROFILE = default
 PIP := pip
 
 # Define the source directories
-SRC_DIRS := src/extract_lambda src/transform_lambda src/load_lambda
+SRC_DIRS := src
 # Define the PYTHONPATH to include both directories
 PYTHONPATH := $(shell echo $(SRC_DIRS) | tr ' ' ':')
 
@@ -21,14 +21,13 @@ TEST_DIR := tests
 ## Create python interpreter environment.
 create-environment:
 	@echo ">>> About to create environment: $(PROJECT_NAME)..."
-	@echo ">>> check python3 version"
+	@echo ">>> check python version"
 	( \
 		$(PYTHON_INTERPRETER) --version; \
 	)
-	@echo ">>> Setting up VirtualEnv."
+	@echo ">>> Setting up virtual environment."
 	( \
-	    $(PIP) install -q virtualenv virtualenvwrapper; \
-	    virtualenv venv --python=$(PYTHON_INTERPRETER); \
+		$(PYTHON_INTERPRETER) -m venv venv; \
 	)
 
 # Define utility variable to help calling Python from the virtual environment
@@ -68,10 +67,13 @@ dev-setup: bandit safety black coverage
 
 # Build / Run
 
-## Run the security test (bandit + safety)
-security-test:
-	$(call execute_in_env, safety check -r ./requirements.txt)
-	$(call execute_in_env, bandit -lll */*/*.py *c/*/*.py)
+## Run the safety scan
+safety-scan:
+	$(call execute_in_env, safety scan -r ./requirements.txt)
+
+## Run the bandit check
+run-bandit:
+	$(call execute_in_env, bandit -lll */*.py)
 
 ## Run the black code check
 run-black:
@@ -86,7 +88,7 @@ check-coverage:
 	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} pytest --cov=src tests/)
 	
 ## Run all checks
-run-checks: security-test run-black check-coverage
+run-checks: run-bandit run-black check-coverage
 
 ################################################################################################################
 # Terraform Commands

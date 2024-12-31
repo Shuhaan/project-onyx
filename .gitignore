@@ -9,10 +9,9 @@ venv/
 **/.terraform*
 */tfplan
 *.tfstate*
-requirements.txt
 .env
 **/__pycache__/
 **/layer
 *.parquet
 docs/
-
+data
