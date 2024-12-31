@@ -12,7 +12,7 @@ PROFILE = default
 PIP := pip
 
 # Define the source directories
-SRC_DIRS := src
+SRC_DIRS := src/extract_lambda src/transform_lambda src/load_lambda
 # Define the PYTHONPATH to include both directories
 PYTHONPATH := $(shell echo $(SRC_DIRS) | tr ' ' ':')
 
